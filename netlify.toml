@@ -1,0 +1,17 @@
+# Next.js 15 App Router. Netlify installs the OpenNext adapter automatically —
+# do not pin @netlify/plugin-nextjs here or you miss runtime updates.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NETLIFY_NEXT_SKEW_PROTECTION = "true"
+
+# Site env (set in Netlify UI → Site configuration → Environment variables):
+#   NEXT_PUBLIC_API_BASE_URL     https://<api-host>/api/v1
+#   NEXT_PUBLIC_SOCKET_URL       wss://<api-host>/realtime
+#   NEXT_PUBLIC_GOOGLE_CLIENT_ID <Google Identity Services client ID>
+#   NEXT_PUBLIC_APP_URL          https://<this-site>.netlify.app  (or custom domain)
+#
+# Do not add SPA /* → /index.html redirects. They break App Router.

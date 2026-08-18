@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Syne } from "next/font/google";
 import { Providers } from "@/components/providers/Providers";
+import { APP_URL } from "@/lib/env";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -28,9 +29,7 @@ export const metadata: Metadata = {
   },
   description:
     "Hyper-local second-hand marketplace for African campuses. Browse nearby deals, make structured offers, close on WhatsApp.",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: new URL(APP_URL),
   icons: {
     icon: "/logo-mark.png",
     apple: "/logo-mark.png",

@@ -74,3 +74,21 @@ npm run prisma:seed
 ```
 
 Then on web, log in as `buyer.buea@offerbid.local` / `Demo1234!` to bid, or `seller.buea@offerbid.local` / `Demo1234!` to accept. Filter Explore to **Buea**.
+
+## Deploy on Netlify
+
+This is a Next.js App Router app. Netlify detects that and runs the OpenNext adapter — no extra plugin to install.
+
+1. Push this repo and create a site from it in the [Netlify dashboard](https://app.netlify.com). Build command and publish directory are in `netlify.toml`.
+2. Add environment variables (Site configuration → Environment variables), then trigger a new deploy so `NEXT_PUBLIC_*` values are baked into the client bundle:
+
+   | Variable | Example |
+   |----------|---------|
+   | `NEXT_PUBLIC_API_BASE_URL` | `https://offerbid-api.onrender.com/api/v1` |
+   | `NEXT_PUBLIC_SOCKET_URL` | `wss://offerbid-api.onrender.com/realtime` |
+   | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google Identity Services client ID |
+   | `NEXT_PUBLIC_APP_URL` | `https://your-site.netlify.app` (or the custom domain) |
+
+3. On the Nest API, allow that site origin in CORS (and Socket.IO `origin`). Without it the browser will block every request.
+4. In Google Cloud Console, add the same origin to **Authorized JavaScript origins** for the OAuth client.
+5. After the first deploy, set `NEXT_PUBLIC_APP_URL` to the real URL (custom domain if you attach one) and redeploy so sitemap and Open Graph tags match.
