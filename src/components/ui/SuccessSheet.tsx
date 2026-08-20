@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { Dialog } from "@/components/ui/Dialog";
+import { celebrateSuccess } from "@/lib/confetti";
 
 export function SuccessSheet({
   open,
@@ -8,13 +10,19 @@ export function SuccessSheet({
   title,
   description,
   children,
+  celebrate = true,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   description?: string;
   children?: React.ReactNode;
+  celebrate?: boolean;
 }) {
+  useEffect(() => {
+    if (open && celebrate) celebrateSuccess();
+  }, [open, celebrate]);
+
   return (
     <Dialog open={open} onClose={onClose} title={title}>
       {description ? (

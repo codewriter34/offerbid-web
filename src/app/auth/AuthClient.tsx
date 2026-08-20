@@ -128,11 +128,14 @@ export default function AuthClient() {
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.onload = () => {
-      if (!window.google) return;
+    if (mode !== "login" && mode !== "signup") return;
+
+    let cancelled = false;
+    const renderGoogleButton = () => {
+      if (cancelled || !window.google) return;
+      const el = document.getElementById("google-btn");
+      if (!el) return;
+      el.innerHTML = "";
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: async (response) => {
@@ -151,22 +154,40 @@ export default function AuthClient() {
           }
         },
       });
-      const el = document.getElementById("google-btn");
-      if (el) {
-        window.google.accounts.id.renderButton(el, {
-          theme: "outline",
-          size: "large",
-          width: 320,
-          text: "continue_with",
-          shape: "rectangular",
-        });
-      }
+      window.google.accounts.id.renderButton(el, {
+        theme: "outline",
+        size: "large",
+        width: 320,
+        text: mode === "signup" ? "signup_with" : "signin_with",
+        shape: "rectangular",
+      });
     };
+
+    const existing = document.querySelector(
+      'script[src="https://accounts.google.com/gsi/client"]',
+    );
+    if (window.google) {
+      renderGoogleButton();
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (existing) {
+      existing.addEventListener("load", renderGoogleButton);
+      return () => {
+        cancelled = true;
+        existing.removeEventListener("load", renderGoogleButton);
+      };
+    }
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.onload = renderGoogleButton;
     document.body.appendChild(script);
     return () => {
-      script.remove();
+      cancelled = true;
     };
-  }, [next, router, setUser, toast]);
+  }, [mode, next, router, setUser, toast]);
 
   function switchMode(nextMode: Mode) {
     setMode(nextMode);
@@ -489,7 +510,18 @@ export default function AuthClient() {
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
                   className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
                 />
-                <span>I agree to the terms and conditions</span>
+                <span>
+                  I agree to the{" "}
+                  <Link
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    terms and conditions
+                  </Link>
+                </span>
               </label>
             </>
           ) : null}

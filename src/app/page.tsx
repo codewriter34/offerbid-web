@@ -41,14 +41,14 @@ export default function LandingPage() {
           description: SITE_DESCRIPTION,
         }}
       />
-      <section className="relative isolate flex min-h-[calc(100dvh-4.5rem)] items-end overflow-hidden bg-ink ob-grain pb-16 pt-10 md:items-center md:pb-24">
+      <section className="relative isolate flex min-h-[calc(100dvh-4.5rem)] items-end overflow-hidden bg-[#1a2330] ob-grain pb-16 pt-10 md:items-center md:pb-24">
         <Image
           src="/hero-bg.jpg"
-          alt="Open-air clothing market in Cameroon"
+          alt="Friends sharing pre-owned finds"
           fill
           priority
           sizes="100vw"
-          className="pointer-events-none object-cover object-center"
+          className="pointer-events-none object-cover object-[center_30%]"
         />
         <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-ink/85 via-ink/35 to-black/25 md:hidden" />
         <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] hidden w-[min(40rem,62%)] bg-gradient-to-r from-ink/85 via-ink/50 to-transparent md:block" />
@@ -67,30 +67,58 @@ export default function LandingPage() {
             Find great second-hand products or give your unused items a new
             home. Meet in public, pay cash or MoMo, close on WhatsApp.
           </p>
-          <div className="animate-fade-rise-delay-2 relative z-20 mt-8 flex flex-wrap gap-3">
+          <div className="animate-fade-rise-delay-2 relative z-20 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
               href="/explore"
-              className="inline-flex h-12 cursor-pointer items-center rounded-md bg-white px-6 text-sm font-bold text-ink transition hover:bg-white/90"
+              className="inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-md bg-white px-6 text-sm font-bold text-ink transition hover:bg-white/90 sm:w-auto"
             >
               Browse deals
             </Link>
             <Link
               href="/auth?next=/sell"
-              className="inline-flex h-12 cursor-pointer items-center rounded-md border border-white/30 bg-white/10 px-6 text-sm font-bold text-white transition hover:bg-white/20"
+              className="inline-flex h-12 w-full cursor-pointer items-center justify-center rounded-md border border-white/30 bg-white/10 px-6 text-sm font-bold text-white transition hover:bg-white/20 sm:w-auto"
             >
               Start selling
             </Link>
           </div>
         </div>
         <a
-          href="https://unsplash.com/photos/TaETOg3N7Ys"
+          href="https://unsplash.com/photos/nBJHO6wmRWw"
           className="absolute bottom-3 right-4 z-10 text-[10px] text-white/45 hover:text-white/80"
         >
           Photo: Unsplash
         </a>
       </section>
 
-      <section id="how" className="relative z-10 scroll-mt-20 bg-canvas px-4 py-20 text-ink lg:px-6">
+      <section
+        id="feed"
+        className="relative z-10 scroll-mt-20 border-b border-border bg-canvas px-4 py-20 text-ink lg:px-6"
+      >
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <h2 className="font-display text-3xl font-bold md:text-4xl">
+                Live on the feed
+              </h2>
+              <p className="mt-2 text-ink-secondary">
+                Live pre-owned listings across Cameroon.
+              </p>
+            </div>
+            <Link
+              href="/explore"
+              className="inline-flex min-h-11 items-center text-sm font-bold text-primary hover:underline"
+            >
+              See all deals →
+            </Link>
+          </div>
+          <FeaturedDeals />
+        </div>
+      </section>
+
+      <section
+        id="how"
+        className="relative z-10 scroll-mt-20 bg-canvas px-4 py-20 text-ink lg:px-6"
+      >
         <div className="mx-auto max-w-7xl">
           <h2 className="font-display text-3xl font-bold md:text-4xl">
             How OfferBid works
@@ -155,29 +183,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      <section id="feed" className="relative z-10 scroll-mt-20 border-y border-border bg-canvas px-4 py-20 text-ink lg:px-6">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h2 className="font-display text-3xl font-bold md:text-4xl">
-                Live on the feed
-              </h2>
-              <p className="mt-2 text-ink-secondary">
-                Live pre-owned listings across Cameroon.
-              </p>
-            </div>
-            <Link
-              href="/explore"
-              className="inline-flex min-h-11 items-center text-sm font-bold text-primary hover:underline"
-            >
-              See all deals →
-            </Link>
-          </div>
-          <FeaturedDeals />
-        </div>
-      </section>
-
     </MarketingShell>
   );
 }

@@ -28,6 +28,7 @@ import {
   MAX_ACTIVE_LISTINGS_VERIFIED,
 } from "@/lib/env";
 import { friendlyUploadError } from "@/lib/formatters";
+import { celebrateSuccess } from "@/lib/confetti";
 import { uploadFiles } from "@/lib/uploads";
 import {
   assertRealPlace,
@@ -179,6 +180,7 @@ export default function SellPage() {
         images: urls,
       });
       toast.push("Listing published", "success");
+      celebrateSuccess();
       router.push(`/listings/${listing.id}`);
     } catch (err) {
       toast.push(friendlyUploadError(err), "error");
