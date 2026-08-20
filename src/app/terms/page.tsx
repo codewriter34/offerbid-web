@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/layout/LegalPage";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Terms",
-  description: "OfferBid MVP terms of use for the campus marketplace.",
-};
+  description:
+    "OfferBid terms of use for buying and selling pre-owned items in Cameroon.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (
     <LegalPage title="Terms of use">
       <p>
-        OfferBid is an MVP marketplace for campus second-hand deals. By using
+        OfferBid is an MVP marketplace for pre-owned deals in Cameroon. By using
         the web or mobile app you agree to list honestly, bid in good faith,
         and complete handovers in person.
       </p>

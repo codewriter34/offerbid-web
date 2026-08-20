@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
 import { LegalPage } from "@/components/layout/LegalPage";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Privacy",
-  description: "How OfferBid handles account, listing, and identity data.",
-};
+  description:
+    "How OfferBid handles account, listing, and identity data for the Cameroon marketplace.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

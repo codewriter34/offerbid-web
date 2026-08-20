@@ -67,7 +67,7 @@ export default function SellPage() {
   const [category, setCategory] = useState("");
   const [hub, setHub] = useState<HubDraft>({
     country: user?.country ?? countries[0]?.country ?? "CAMEROON",
-    city: selectedCity ?? user?.city ?? "Buea",
+    city: selectedCity ?? user?.city ?? "",
     customCity: "",
     location: selectedLocation ?? user?.location ?? "",
     customLocation: "",
@@ -276,7 +276,7 @@ export default function SellPage() {
               value={title}
               error={errors.title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="iPhone 13, 128GB, Molyko pickup"
+              placeholder="iPhone 13, 128GB, nearby pickup"
             />
             <Input
               label="Asking price"

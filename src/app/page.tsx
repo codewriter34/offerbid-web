@@ -2,16 +2,49 @@ import Image from "next/image";
 import Link from "next/link";
 import { Camera, Gavel, MapPin, MessageCircle } from "lucide-react";
 import { MarketingShell } from "@/components/layout/Shells";
-import { SiteFooter } from "@/components/layout/SiteFooter";
 import { FeaturedDeals } from "@/components/marketing/FeaturedDeals";
+import { JsonLd } from "@/components/seo/JsonLd";
+import {
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  SITE_TAGLINE,
+  absoluteUrl,
+} from "@/lib/seo";
 
 export default function LandingPage() {
   return (
     <MarketingShell>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: SITE_NAME,
+          url: absoluteUrl(),
+          description: SITE_DESCRIPTION,
+          inLanguage: "en",
+          potentialAction: {
+            "@type": "SearchAction",
+            target: `${absoluteUrl("/explore")}?q={search_term_string}`,
+            "query-input": "required name=search_term_string",
+          },
+        }}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: SITE_NAME,
+          url: absoluteUrl(),
+          logo: absoluteUrl("/logo-mark.png"),
+          slogan: SITE_TAGLINE,
+          areaServed: "CM",
+          description: SITE_DESCRIPTION,
+        }}
+      />
       <section className="relative isolate flex min-h-[calc(100dvh-4.5rem)] items-end overflow-hidden bg-ink ob-grain pb-16 pt-10 md:items-center md:pb-24">
         <Image
           src="/hero-bg.jpg"
-          alt="Open-air clothing market in West Africa"
+          alt="Open-air clothing market in Cameroon"
           fill
           priority
           sizes="100vw"
@@ -24,22 +57,22 @@ export default function LandingPage() {
           <p className="animate-fade-rise mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/20 bg-black/25 px-3 py-1.5 text-xs font-semibold text-white/90">
             <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
             <span className="truncate">
-              Live in Buea · Molyko · UB Gate · Sandpit · Mile 17
+              Live in Cameroon · Douala · Yaoundé · Buea · Limbe
             </span>
           </p>
           <h1 className="animate-fade-rise max-w-2xl font-display text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl md:text-5xl">
-            Unused gear nearby. Make a fair offer.
+            Buy &amp; sell pre-owned
           </h1>
           <p className="animate-fade-rise-delay mt-4 max-w-xl text-base text-white/80 sm:text-lg">
-            Phones, laptops, and hostel stuff around campus. Meet in public,
-            pay cash or MoMo, close on WhatsApp.
+            Find great second-hand products or give your unused items a new
+            home. Meet in public, pay cash or MoMo, close on WhatsApp.
           </p>
           <div className="animate-fade-rise-delay-2 relative z-20 mt-8 flex flex-wrap gap-3">
             <Link
               href="/explore"
               className="inline-flex h-12 cursor-pointer items-center rounded-md bg-white px-6 text-sm font-bold text-ink transition hover:bg-white/90"
             >
-              Browse Buea deals
+              Browse deals
             </Link>
             <Link
               href="/auth?next=/sell"
@@ -63,8 +96,8 @@ export default function LandingPage() {
             How OfferBid works
           </h2>
           <p className="mt-3 max-w-2xl text-ink-secondary">
-            Unused gear nearby, a fair offer, then meet in person — no endless
-            chat until a deal sticks.
+            Browse pre-owned listings, make a fair offer, then meet in person —
+            no endless chat until a deal sticks.
           </p>
           <ol className="mt-10 grid gap-4 md:grid-cols-3 md:gap-6">
             {[
@@ -117,7 +150,7 @@ export default function LandingPage() {
               href="/explore"
               className="inline-flex min-h-11 items-center text-sm font-bold text-primary hover:underline"
             >
-              Browse Buea deals →
+              Browse deals →
             </Link>
           </div>
         </div>
@@ -131,21 +164,20 @@ export default function LandingPage() {
                 Live on the feed
               </h2>
               <p className="mt-2 text-ink-secondary">
-                Live Buea deals — phones, laptops, hostel gear.
+                Live pre-owned listings across Cameroon.
               </p>
             </div>
             <Link
               href="/explore"
               className="inline-flex min-h-11 items-center text-sm font-bold text-primary hover:underline"
             >
-              See all Buea deals →
+              See all deals →
             </Link>
           </div>
           <FeaturedDeals />
         </div>
       </section>
 
-      <SiteFooter light />
     </MarketingShell>
   );
 }

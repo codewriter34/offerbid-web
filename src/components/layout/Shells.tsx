@@ -92,24 +92,7 @@ export function AppShell({
             <span className="max-w-[9rem] truncate sm:max-w-none">{hubLabel}</span>
           </button>
 
-          <form
-            className="hidden flex-1 md:block"
-            onSubmit={(e) => {
-              e.preventDefault();
-              submitSearch();
-            }}
-          >
-            <div className="relative mx-auto max-w-xl">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search phones, laptops, desks…"
-                className="field-control pl-10"
-                aria-label="Search listings"
-              />
-            </div>
-          </form>
+          <div className="hidden flex-1 md:block" />
 
           <nav className="ml-auto flex items-center gap-1">
             {nav.map((item) => {
@@ -178,13 +161,40 @@ export function AppShell({
             )}
           </nav>
         </div>
+        <div className="border-t border-border/70 bg-canvas/90">
+          <form
+            className="mx-auto max-w-7xl px-4 py-2.5 lg:px-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitSearch();
+            }}
+          >
+            <label className="relative block">
+              <span className="sr-only">Search listings</span>
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-primary" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search for an item"
+                className="field-control h-12 rounded-full border-primary/20 bg-surface pl-11 pr-24 shadow-rest placeholder:text-ink-muted focus:border-primary"
+                aria-label="Search listings"
+              />
+              <button
+                type="submit"
+                className="absolute right-1.5 top-1/2 inline-flex h-9 -translate-y-1/2 items-center rounded-full bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
+              >
+                Search
+              </button>
+            </label>
+          </form>
+        </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-6 pb-dock lg:px-6 lg:py-8 lg:pb-8">
         {children}
       </main>
 
-      <div className="hidden lg:block">
+      <div className="pb-24 lg:pb-0">
         <SiteFooter />
       </div>
 
@@ -360,6 +370,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
         ) : null}
       </header>
       {children}
+      <SiteFooter />
     </div>
   );
 }

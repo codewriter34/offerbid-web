@@ -14,9 +14,8 @@ import { fetchListings } from "@/features/api/services";
 
 export function FeaturedDeals() {
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ["featured-listings", "Buea"],
-    queryFn: () =>
-      fetchListings({ limit: 4, status: "ACTIVE", city: "Buea" }),
+    queryKey: ["featured-listings", "cameroon"],
+    queryFn: () => fetchListings({ limit: 4, status: "ACTIVE" }),
   });
 
   if (isLoading) {

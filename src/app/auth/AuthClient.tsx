@@ -405,7 +405,7 @@ export default function AuthClient() {
               >
                 {COUNTRY_OPTIONS.map((c) => (
                   <option key={c.country} value={c.country}>
-                    {c.label}
+                    {c.flag} {c.label}
                   </option>
                 ))}
               </Select>
