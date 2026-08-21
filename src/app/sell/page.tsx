@@ -179,7 +179,6 @@ export default function SellPage() {
         location,
         images: urls,
       });
-      toast.push("Listing published", "success");
       celebrateSuccess();
       router.push(`/listings/${listing.id}`);
     } catch (err) {
