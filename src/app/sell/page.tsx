@@ -28,6 +28,7 @@ import {
   MAX_ACTIVE_LISTINGS_VERIFIED,
 } from "@/lib/env";
 import { friendlyUploadError } from "@/lib/formatters";
+import { celebrateSuccess } from "@/lib/confetti";
 import { uploadFiles } from "@/lib/uploads";
 import {
   assertRealPlace,
@@ -67,7 +68,7 @@ export default function SellPage() {
   const [category, setCategory] = useState("");
   const [hub, setHub] = useState<HubDraft>({
     country: user?.country ?? countries[0]?.country ?? "CAMEROON",
-    city: selectedCity ?? user?.city ?? "Buea",
+    city: selectedCity ?? user?.city ?? "",
     customCity: "",
     location: selectedLocation ?? user?.location ?? "",
     customLocation: "",
@@ -179,6 +180,7 @@ export default function SellPage() {
         images: urls,
       });
       toast.push("Listing published", "success");
+      celebrateSuccess();
       router.push(`/listings/${listing.id}`);
     } catch (err) {
       toast.push(friendlyUploadError(err), "error");
@@ -276,7 +278,7 @@ export default function SellPage() {
               value={title}
               error={errors.title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="iPhone 13, 128GB, Molyko pickup"
+              placeholder="iPhone 13, 128GB, nearby pickup"
             />
             <Input
               label="Asking price"

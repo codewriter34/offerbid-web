@@ -26,6 +26,19 @@ export const MAX_ACTIVE_BIDS_PER_ITEM = 3;
 export const MAX_LISTING_IMAGES = 4;
 
 export const COUNTRY_OPTIONS = [
-  { country: "CAMEROON" as const, label: "Cameroon", countryCode: "+237" },
-  { country: "NIGERIA" as const, label: "Nigeria", countryCode: "+234" },
+  { country: "CAMEROON" as const, label: "Cameroon", countryCode: "+237", flag: "🇨🇲" },
+  { country: "NIGERIA" as const, label: "Nigeria", countryCode: "+234", flag: "🇳🇬" },
 ];
+
+export function countryFlag(country: string): string {
+  return (
+    COUNTRY_OPTIONS.find((option) => option.country === country)?.flag ?? "🌍"
+  );
+}
+
+export function countryLabel(country: string): string {
+  return (
+    COUNTRY_OPTIONS.find((option) => option.country === country)?.label ??
+    country
+  );
+}

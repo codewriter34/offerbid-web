@@ -271,15 +271,13 @@ export default function SellingPage() {
                       </div>
                     </div>
                   </div>
-                  {bid.whatsappUrl &&
-                  bid.status !== "PENDING" &&
-                  bid.status !== "COUNTERED" ? (
+                  {bid.whatsappUrl && bid.status !== "PENDING" ? (
                     <Button onClick={() => openWhatsApp(bid.whatsappUrl!)}>
                       WhatsApp
                     </Button>
                   ) : null}
                 </div>
-                {bid.status === "PENDING" || bid.status === "COUNTERED" ? (
+                {bid.status === "PENDING" ? (
                   <OfferActions
                     counterValue={counterByBid[bid.id] ?? ""}
                     onCounterChange={(value) =>
@@ -309,6 +307,11 @@ export default function SellingPage() {
                     }
                     counterPending
                   />
+                ) : null}
+                {bid.status === "COUNTERED" ? (
+                  <p className="mt-3 rounded-md border border-border bg-canvas px-3 py-2 text-sm text-ink-secondary">
+                    Waiting for buyer to accept or decline your counter.
+                  </p>
                 ) : null}
               </div>
             ))}

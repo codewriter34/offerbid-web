@@ -1,12 +1,13 @@
 import { Suspense } from "react";
-import type { Metadata } from "next";
 import ExploreClient from "./ExploreClient";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Explore",
+export const metadata = pageMetadata({
+  title: "Explore pre-owned deals",
   description:
-    "Browse hyper-local second-hand deals near your campus hub on OfferBid.",
-};
+    "Browse pre-owned phones, furniture, fashion, and everyday finds across Cameroon. Make a fair offer and close on WhatsApp.",
+  path: "/explore",
+});
 
 export default function ExplorePage() {
   return (

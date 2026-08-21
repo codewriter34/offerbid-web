@@ -631,9 +631,7 @@ export default function ListingDetailClient({
                     ) : null}
                   </div>
 
-                  {isOwner &&
-                  isActive &&
-                  (bid.status === "PENDING" || bid.status === "COUNTERED") ? (
+                  {isOwner && isActive && bid.status === "PENDING" ? (
                     <OfferActions
                       counterValue={counterByBid[bid.id] ?? ""}
                       onCounterChange={(value) =>
@@ -663,6 +661,12 @@ export default function ListingDetailClient({
                       }
                       counterPending
                     />
+                  ) : null}
+
+                  {isOwner && bid.status === "COUNTERED" ? (
+                    <p className="mt-3 rounded-md border border-border bg-canvas px-3 py-2 text-sm text-ink-secondary">
+                      Waiting for buyer to accept or decline your counter.
+                    </p>
                   ) : null}
 
                   {!isOwner && bid.status === "COUNTERED" ? (
