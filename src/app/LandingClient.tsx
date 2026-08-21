@@ -142,14 +142,14 @@ export function LandingClient() {
       <section className="relative isolate flex min-h-[calc(100dvh-4.5rem)] items-end overflow-hidden bg-[#1a2330] ob-grain pb-16 pt-10 md:items-center md:pb-24">
         <Image
           src="/hero-bg.jpg"
-          alt="Buyer and seller completing a purchase at the counter"
+          alt="Shopper browsing clothes on a rack at a local market"
           fill
           priority
           sizes="100vw"
-          className="pointer-events-none object-cover object-center"
+          className="pointer-events-none object-cover object-[center_35%]"
         />
-        <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-ink/85 via-ink/35 to-black/25 md:hidden" />
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] hidden w-[min(40rem,62%)] bg-gradient-to-r from-ink/85 via-ink/50 to-transparent md:block" />
+        <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-ink/85 via-ink/40 to-black/30 md:hidden" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-[1] hidden w-[min(40rem,62%)] bg-gradient-to-r from-ink/85 via-ink/55 to-transparent md:block" />
 
         <div className="relative z-10 mx-auto w-full max-w-7xl px-4 lg:px-6">
           <p className="animate-fade-rise mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-white/20 bg-black/25 px-3 py-1.5 text-xs font-semibold text-white/90">
@@ -181,7 +181,7 @@ export function LandingClient() {
           </div>
         </div>
         <a
-          href="https://unsplash.com/photos/tG36tHGQktg"
+          href="https://unsplash.com/photos/s8KvpUV65sY"
           className="absolute bottom-3 right-4 z-10 text-[10px] text-white/45 hover:text-white/80"
         >
           Photo: Unsplash
