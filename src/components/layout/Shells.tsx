@@ -46,7 +46,7 @@ export function AppShell({
 
   return (
     <div className="ob-atmosphere min-h-screen min-h-dvh">
-      <SiteNavbar variant="app" showHub />
+      <SiteNavbar showHub />
 
       <div className="border-b border-border/70 bg-surface/90">
         <form
@@ -150,8 +150,8 @@ export function AppShell({
 
 export function MarketingShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative isolate min-h-screen min-h-dvh bg-ink text-white">
-      <SiteNavbar variant="marketing" showHub={false} />
+    <div className="ob-atmosphere relative isolate min-h-screen min-h-dvh text-ink">
+      <SiteNavbar home showHub={false} />
       {children}
       <SiteFooter />
     </div>
