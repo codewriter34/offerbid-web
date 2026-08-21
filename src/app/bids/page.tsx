@@ -149,7 +149,7 @@ export default function MyBidsPage() {
           <EmptyState
             icon={Gavel}
             title="Nothing in this filter."
-            description="Try another tab or browse more deals in Buea."
+            description="Try another tab or browse more deals near you."
             action={
               <Button variant="secondary" onClick={() => setFilter("ALL")}>
                 Show all
@@ -221,9 +221,7 @@ export default function MyBidsPage() {
                       </div>
                     </div>
                   </div>
-                  {bid.whatsappUrl &&
-                  bid.status !== "PENDING" &&
-                  bid.status !== "COUNTERED" ? (
+                  {bid.whatsappUrl && bid.status !== "PENDING" ? (
                     <Button onClick={() => openWhatsApp(bid.whatsappUrl!)}>
                       WhatsApp
                     </Button>

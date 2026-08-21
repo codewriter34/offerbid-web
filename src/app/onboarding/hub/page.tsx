@@ -111,7 +111,7 @@ export default function HubOnboardingPage() {
       <div className="mx-auto max-w-lg">
         <PageHeader
           title="Choose your hub"
-          description="Pick your city and neighborhood so we only show deals you can pick up nearby."
+          description="Your hub is where you sell from and meet buyers. Pick the city you live in so listings show in the right place."
         />
 
         <div className="space-y-4 rounded-lg border border-border bg-surface p-4 shadow-rest">
@@ -120,7 +120,7 @@ export default function HubOnboardingPage() {
             label="Meetup hint / address area"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            placeholder="e.g. Near UB Gate"
+            placeholder="e.g. Near main road or landmark"
             required
           />
           {needsWhatsApp ? (

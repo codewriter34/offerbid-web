@@ -22,17 +22,13 @@ const account = [
 function FooterLinks({
   title,
   items,
-  linkClass,
-  headingClass,
 }: {
   title: string;
   items: { href: string; label: string }[];
-  linkClass: string;
-  headingClass: string;
 }) {
   return (
     <div>
-      <p className={`text-xs font-bold uppercase tracking-wide ${headingClass}`}>
+      <p className="text-xs font-bold uppercase tracking-wide text-white/70">
         {title}
       </p>
       <ul className="mt-3 space-y-1">
@@ -40,7 +36,7 @@ function FooterLinks({
           <li key={item.href}>
             <Link
               href={item.href}
-              className={`inline-flex min-h-11 items-center text-sm font-semibold ${linkClass}`}
+              className="inline-flex min-h-11 items-center text-sm font-semibold text-white/90 hover:text-white"
             >
               {item.label}
             </Link>
@@ -51,54 +47,28 @@ function FooterLinks({
   );
 }
 
-export function SiteFooter({ light = false }: { light?: boolean }) {
-  const headingClass = light ? "text-white/50" : "text-ink-muted";
-  const linkClass = light
-    ? "text-white/70 hover:text-white"
-    : "text-ink-secondary hover:text-primary";
-
+export function SiteFooter() {
   return (
-    <footer
-      className={
-        light
-          ? "border-t border-white/10 bg-ink text-white/70"
-          : "mt-16 border-t border-border bg-surface text-ink-muted"
-      }
-    >
+    <footer className="bg-primary text-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] lg:px-6">
         <div>
-          <Wordmark href="/" light={light} className="mb-3" />
-          <p className="max-w-sm text-sm leading-relaxed">
-            Unused gear nearby. Make a fair offer. Close on WhatsApp.
+          <Wordmark href="/" light className="mb-3" />
+          <p className="max-w-sm text-sm font-semibold leading-relaxed text-white">
+            Buy &amp; sell pre-owned.
           </p>
-          <p className={`mt-3 text-xs font-semibold ${headingClass}`}>
-            Live in Buea · Lagos next
+          <p className="mt-1 max-w-sm text-sm leading-relaxed text-white/85">
+            Find great second-hand products or give your unused items a new
+            home.
+          </p>
+          <p className="mt-3 text-xs font-semibold text-white/70">
+            Cameroon first · Nigeria next
           </p>
         </div>
-        <FooterLinks
-          title="Product"
-          items={product}
-          linkClass={linkClass}
-          headingClass={headingClass}
-        />
-        <FooterLinks
-          title="Trust"
-          items={trust}
-          linkClass={linkClass}
-          headingClass={headingClass}
-        />
-        <FooterLinks
-          title="Account"
-          items={account}
-          linkClass={linkClass}
-          headingClass={headingClass}
-        />
+        <FooterLinks title="Product" items={product} />
+        <FooterLinks title="Trust" items={trust} />
+        <FooterLinks title="Account" items={account} />
       </div>
-      <div
-        className={`mx-auto max-w-7xl px-4 pb-8 text-xs lg:px-6 ${
-          light ? "text-white/40" : "text-ink-muted"
-        }`}
-      >
+      <div className="mx-auto max-w-7xl px-4 pb-8 text-xs text-white/70 lg:px-6">
         © {new Date().getFullYear()} OfferBid
       </div>
     </footer>

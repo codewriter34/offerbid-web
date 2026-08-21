@@ -1,15 +1,16 @@
-import type { Metadata } from "next";
 import { LegalPage } from "@/components/layout/LegalPage";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Safety",
   description:
-    "Meet in public, inspect before paying, and close on WhatsApp. OfferBid safety rules for campus deals.",
-};
+    "Meet in public, inspect before paying, and close on WhatsApp. OfferBid safety rules for pre-owned deals in Cameroon.",
+  path: "/safety",
+});
 
 export default function SafetyPage() {
   return (
-    <LegalPage title="Stay safe on campus deals">
+    <LegalPage title="Stay safe on pre-owned deals">
       <p>
         OfferBid is a structured marketplace, not an escrow service. You meet
         in person, inspect the item, then pay cash or MoMo. There is no in-app
@@ -17,7 +18,7 @@ export default function SafetyPage() {
       </p>
       <h2 className="font-display text-xl font-bold text-ink">Meetup rules</h2>
       <ul className="list-disc space-y-2 pl-5">
-        <li>Meet in a busy public spot — UB Gate, campus gates, markets.</li>
+        <li>Meet in a busy public spot — markets, main roads, or well-lit areas.</li>
         <li>Bring a friend when you can. Tell someone where you are going.</li>
         <li>Inspect the item before you pay. Power it on. Check serials.</li>
         <li>Never send a deposit to “hold” an item you have not seen.</li>

@@ -1,7 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Syne } from "next/font/google";
 import { Providers } from "@/components/providers/Providers";
-import { APP_URL } from "@/lib/env";
+import {
+  SITE_DESCRIPTION,
+  SITE_KEYWORDS,
+  SITE_NAME,
+  SITE_TAGLINE,
+  absoluteUrl,
+} from "@/lib/seo";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -20,26 +26,45 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#2070C8",
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(absoluteUrl()),
   title: {
-    default: "OfferBid — Local deals, structured offers",
-    template: "%s · OfferBid",
+    default: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    template: `%s · ${SITE_NAME}`,
   },
-  description:
-    "Hyper-local second-hand marketplace for African campuses. Browse nearby deals, make structured offers, close on WhatsApp.",
-  metadataBase: new URL(APP_URL),
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  keywords: SITE_KEYWORDS,
+  authors: [{ name: SITE_NAME, url: absoluteUrl() }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  category: "marketplace",
+  alternates: { canonical: absoluteUrl() },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large" },
+  },
   icons: {
     icon: "/logo-mark.png",
     apple: "/logo-mark.png",
   },
+  manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "OfferBid",
-    description:
-      "Turn unused gear into cash with structured bidding and WhatsApp handshakes.",
     type: "website",
-    images: [{ url: "/logo.png" }],
+    locale: "en_CM",
+    url: absoluteUrl(),
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} — ${SITE_TAGLINE}`,
+    description: SITE_DESCRIPTION,
   },
 };
 

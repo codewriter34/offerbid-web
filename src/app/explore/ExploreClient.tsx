@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { MapPin, Search, SlidersHorizontal } from "lucide-react";
+import { MapPin, SlidersHorizontal } from "lucide-react";
 import { AppShell } from "@/components/layout/Shells";
 import {
   CategoryChips,
@@ -56,8 +56,6 @@ function applyClientFilters(
 export default function ExploreClient() {
   const categories = useHubStore((s) => s.categories);
   const countries = useHubStore((s) => s.countries);
-  const selectedCity = useHubStore((s) => s.selectedCity);
-  const selectedLocation = useHubStore((s) => s.selectedLocation);
   const setSelection = useHubStore((s) => s.setSelection);
   const user = useAuthStore((s) => s.user);
   const searchParams = useSearchParams();
@@ -66,12 +64,8 @@ export default function ExploreClient() {
   const [search, setSearch] = useState(initialQ);
   const [q, setQ] = useState(initialQ);
   const [category, setCategory] = useState<string | null>(null);
-  const [city, setCity] = useState<string | null>(
-    selectedCity ?? user?.city ?? "Buea",
-  );
-  const [location, setLocation] = useState<string | null>(
-    selectedLocation ?? user?.location ?? null,
-  );
+  const [city, setCity] = useState<string | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
   const [sort, setSort] = useState("newest");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -82,13 +76,6 @@ export default function ExploreClient() {
     setSearch(next);
     setQ(next);
   }, [searchParams]);
-
-  useEffect(() => {
-    if (selectedCity) {
-      setCity(selectedCity);
-      setLocation(selectedLocation ?? null);
-    }
-  }, [selectedCity, selectedLocation]);
 
   const cities = useMemo(() => allCities(countries), [countries]);
   const neighborhoods = useMemo(() => {
@@ -105,8 +92,8 @@ export default function ExploreClient() {
       fetchListings({
         q: q || null,
         category,
-        city,
-        location,
+        city: city || null,
+        location: location || null,
         page: pageParam,
         limit: 24,
       }),
@@ -120,8 +107,8 @@ export default function ExploreClient() {
   const total = query.data?.pages.at(-1)?.total ?? rawListings.length;
   const listings = applyClientFilters(rawListings, sort, minPrice, maxPrice);
   const runSearch = () => setQ(search.trim());
-  const placeLabel = location && city ? `${location}, ${city}` : city ?? "nearby";
-  const filterCount = [location, minPrice, maxPrice, sort !== "newest"].filter(
+  const placeLabel = location && city ? `${location}, ${city}` : city;
+  const filterCount = [city, location, minPrice, maxPrice, sort !== "newest"].filter(
     Boolean,
   ).length;
 
@@ -198,31 +185,13 @@ export default function ExploreClient() {
       onSearchSubmit={runSearch}
     >
       <PageHeader
-        title={city ? `Deals in ${city}` : "Nearby deals"}
+        title={city ? `Deals in ${city}` : "All deals"}
         description={
           location
             ? `Pickup around ${location}. Make an offer, close on WhatsApp.`
-            : "Phones, laptops, and hostel gear you can pick up."
+            : "Pre-owned products across Cameroon. Filter only if you want a smaller list."
         }
       />
-
-      <form
-        className="mb-4 md:hidden"
-        onSubmit={(e) => {
-          e.preventDefault();
-          runSearch();
-        }}
-      >
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search phones, laptops, desks…"
-            className="field-control pl-10"
-          />
-        </div>
-      </form>
 
       <div className="mb-5 flex items-center gap-2">
         <div className="min-w-0 flex-1 overflow-hidden">
@@ -278,13 +247,30 @@ export default function ExploreClient() {
       ) : !listings.length ? (
         <EmptyState
           icon={MapPin}
-          title={`Nothing listed around ${placeLabel} yet.`}
-          description="Try expanding your location, or be the first to list something nearby."
+          title={placeLabel ? `Nothing listed around ${placeLabel} yet.` : "No listings yet."}
+          description={
+            placeLabel
+              ? "Try showing all deals, or be the first to list something nearby."
+              : "Be the first to list a pre-owned item."
+          }
           action={
             <div className="flex flex-wrap justify-center gap-2">
-              <Button variant="outline" onClick={() => setFiltersOpen(true)}>
-                Change location
-              </Button>
+              {placeLabel ? (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setCity(null);
+                    setLocation(null);
+                    setSelection(null, null);
+                  }}
+                >
+                  Show all deals
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={() => setFiltersOpen(true)}>
+                  Change location
+                </Button>
+              )}
               <Button
                 onClick={() => {
                   window.location.href = user ? "/sell" : "/auth?next=/sell";
@@ -299,7 +285,8 @@ export default function ExploreClient() {
         <>
           <p className="mb-3 type-meta">
             {listings.length}
-            {total ? ` of ${total}` : ""} around {placeLabel}
+            {total ? ` of ${total}` : ""}
+            {placeLabel ? ` in ${placeLabel}` : " across Cameroon"}
             {query.isFetching ? " · updating" : ""}
           </p>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">

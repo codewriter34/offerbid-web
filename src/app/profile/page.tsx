@@ -18,6 +18,7 @@ import {
 import { AppShell } from "@/components/layout/Shells";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ListingTile } from "@/components/listings/ListingTile";
@@ -159,6 +160,8 @@ export default function ProfilePage() {
   const selectedLocation = useHubStore((s) => s.selectedLocation);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const listingsQuery = useQuery({
     queryKey: ["my-listings"],
@@ -404,14 +407,49 @@ export default function ProfilePage() {
                 icon={Store}
                 title="Log out"
                 subtitle="Sign out of this device"
-                onClick={async () => {
-                  await logout();
-                  clear();
-                  disconnectSocket();
-                  router.replace("/");
-                }}
+                onClick={() => setLogoutOpen(true)}
               />
             </section>
+
+            <Dialog
+              open={logoutOpen}
+              onClose={() => {
+                if (!loggingOut) setLogoutOpen(false);
+              }}
+              title="Log out?"
+            >
+              <p className="text-sm leading-relaxed text-ink-secondary">
+                Log out of this device? You can sign back in anytime.
+              </p>
+              <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  disabled={loggingOut}
+                  onClick={() => setLogoutOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="w-full sm:w-auto"
+                  loading={loggingOut}
+                  onClick={async () => {
+                    setLoggingOut(true);
+                    try {
+                      await logout();
+                      clear();
+                      disconnectSocket();
+                      setLogoutOpen(false);
+                      router.replace("/");
+                    } finally {
+                      setLoggingOut(false);
+                    }
+                  }}
+                >
+                  Log out
+                </Button>
+              </div>
+            </Dialog>
 
             {listingsQuery.isLoading ? (
               <section>
