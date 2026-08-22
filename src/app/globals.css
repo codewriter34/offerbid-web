@@ -267,18 +267,10 @@ body {
   }
 }
 
-.safe-dock {
-  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-}
-
 .safe-sticky-cta {
-  bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .safe-toast {
-  bottom: calc(6.5rem + env(safe-area-inset-bottom, 0px));
-}
-
-.pb-dock {
-  padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
 }

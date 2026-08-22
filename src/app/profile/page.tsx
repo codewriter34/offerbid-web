@@ -133,7 +133,7 @@ function MenuRow({
   );
 
   const className =
-    "flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition last:border-b-0 hover:bg-elevated/60";
+    "flex w-full cursor-pointer items-center gap-3 border-b border-border px-4 py-3 text-left transition last:border-b-0 hover:bg-elevated/60";
 
   if (href) {
     return (

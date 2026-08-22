@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Wordmark } from "@/components/brand/Brand";
+import { useAuthStore } from "@/stores/authStore";
 
 const product = [
   { href: "/explore", label: "Explore" },
@@ -12,11 +15,6 @@ const trust = [
   { href: "/safety", label: "Safety" },
   { href: "/terms", label: "Terms" },
   { href: "/privacy", label: "Privacy" },
-];
-
-const account = [
-  { href: "/auth", label: "Log in" },
-  { href: "mailto:forwamba.achingale@ubuea.cm", label: "Contact" },
 ];
 
 function FooterLinks({
@@ -36,7 +34,7 @@ function FooterLinks({
           <li key={item.href}>
             <Link
               href={item.href}
-              className="inline-flex min-h-11 items-center text-sm font-semibold text-white/90 hover:text-white"
+              className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-white/90 hover:text-white"
             >
               {item.label}
             </Link>
@@ -48,6 +46,17 @@ function FooterLinks({
 }
 
 export function SiteFooter() {
+  const user = useAuthStore((s) => s.user);
+  const account = user
+    ? [
+        { href: "/profile", label: "Profile" },
+        { href: "mailto:forwamba.achingale@ubuea.cm", label: "Contact" },
+      ]
+    : [
+        { href: "/auth", label: "Log in" },
+        { href: "mailto:forwamba.achingale@ubuea.cm", label: "Contact" },
+      ];
+
   return (
     <footer className="bg-primary text-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] lg:px-6">
