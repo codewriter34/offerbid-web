@@ -16,7 +16,7 @@ export function ListingTile({ listing }: { listing: Listing }) {
   return (
     <Link
       href={`/listings/${listing.id}`}
-      className="listing-tile group block overflow-hidden rounded-lg border border-border bg-surface shadow-rest"
+      className="listing-tile group block cursor-pointer overflow-hidden rounded-lg border border-border bg-surface shadow-rest"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-elevated">
         {image ? (
@@ -86,7 +86,7 @@ export function CategoryChips({
         type="button"
         onClick={() => onChange(null)}
         className={cn(
-          "min-h-11 shrink-0 rounded-md px-3 text-sm font-semibold transition",
+          "min-h-11 shrink-0 cursor-pointer rounded-md px-3 text-sm font-semibold transition",
           !value
             ? "bg-primary text-white"
             : "bg-surface text-ink-secondary ring-1 ring-border hover:text-ink",
@@ -100,7 +100,7 @@ export function CategoryChips({
           type="button"
           onClick={() => onChange(cat === value ? null : cat)}
           className={cn(
-            "min-h-11 shrink-0 rounded-md px-3 text-sm font-semibold transition",
+            "min-h-11 shrink-0 cursor-pointer rounded-md px-3 text-sm font-semibold transition",
             value === cat
               ? "bg-primary text-white"
               : "bg-surface text-ink-secondary ring-1 ring-border hover:text-ink",

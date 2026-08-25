@@ -9,7 +9,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/Shells";
 import { RequireAuth } from "@/components/auth/RequireAuth";
-import { HubFields } from "@/components/hub/HubFields";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -30,11 +29,7 @@ import {
 import { friendlyUploadError } from "@/lib/formatters";
 import { celebrateSuccess } from "@/lib/confetti";
 import { uploadFiles } from "@/lib/uploads";
-import {
-  assertRealPlace,
-  currencyForCountry,
-  type HubDraft,
-} from "@/lib/hubs";
+import { currencyForCountry } from "@/lib/hubs";
 import {
   isValidListingDescription,
   isValidListingTitle,
@@ -56,9 +51,6 @@ export default function SellPage() {
   const user = useAuthStore((s) => s.user);
   const categories = useHubStore((s) => s.categories);
   const countries = useHubStore((s) => s.countries);
-  const otherLabel = useHubStore((s) => s.otherLabel);
-  const selectedCity = useHubStore((s) => s.selectedCity);
-  const selectedLocation = useHubStore((s) => s.selectedLocation);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -66,13 +58,6 @@ export default function SellPage() {
   const [minBidPrice, setMinBidPrice] = useState("");
   const [showMinBid, setShowMinBid] = useState(false);
   const [category, setCategory] = useState("");
-  const [hub, setHub] = useState<HubDraft>({
-    country: user?.country ?? countries[0]?.country ?? "CAMEROON",
-    city: selectedCity ?? user?.city ?? "",
-    customCity: "",
-    location: selectedLocation ?? user?.location ?? "",
-    customLocation: "",
-  });
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -99,7 +84,12 @@ export default function SellPage() {
       (listing) => String(listing.status).toUpperCase() === "ACTIVE",
     ).length ?? 0;
   const atLimit = activeCount >= listingCap;
-  const currency = currencyForCountry(countries, hub.country);
+  const currency = currencyForCountry(
+    countries,
+    user?.country ?? countries[0]?.country ?? "CAMEROON",
+  );
+  const meetupLocation = (user?.location || user?.city || "").trim();
+  const meetupLabel = [user?.location, user?.city].filter(Boolean).join(", ");
 
   const categoryOptions = useMemo(
     () =>
@@ -138,11 +128,9 @@ export default function SellPage() {
       const minErr = isValidMinBid(Number(minBidPrice), Number(askingPrice));
       if (minErr) next.minBidPrice = minErr;
     }
-    const city = hub.city === otherLabel ? hub.customCity : hub.city;
-    const location =
-      hub.location === otherLabel ? hub.customLocation : hub.location;
-    const placeErr = assertRealPlace(city, location, otherLabel);
-    if (placeErr) next.location = placeErr;
+    if (meetupLocation.length < 2) {
+      next.location = "Set your hub before publishing.";
+    }
     if (files.length === 0) next.images = "Add at least one photo";
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -159,9 +147,11 @@ export default function SellPage() {
       return;
     }
     if (!validate()) return;
-
-    const location =
-      hub.location === otherLabel ? hub.customLocation.trim() : hub.location;
+    if (meetupLocation.length < 2) {
+      toast.push("Set your hub before publishing a listing.", "error");
+      router.push("/onboarding/hub?next=/sell");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -176,7 +166,7 @@ export default function SellPage() {
           : {}),
         currency,
         category,
-        location,
+        location: meetupLocation,
         images: urls,
       });
       toast.push("Listing published", "success");
@@ -192,10 +182,10 @@ export default function SellPage() {
   return (
     <AppShell>
       <RequireAuth next="/sell">
-        <div className="mx-auto max-w-2xl pb-dock lg:pb-0">
+        <div className="mx-auto max-w-2xl">
           <PageHeader
             title="Sell an item"
-            description="Photos, a price, and a pickup spot. Buyers nearby can offer."
+            description="Photos, a price, and your saved hub. Buyers nearby can offer."
           />
           <p className="mb-6 type-meta">
             {activeCount}/{listingCap} active listings
@@ -292,16 +282,32 @@ export default function SellPage() {
               leading={currency}
             />
 
-            <div className="space-y-3">
-              <p className="type-label">Pickup spot</p>
-              <HubFields draft={hub} onChange={setHub} showCountry />
-              {errors.location ? (
-                <p className="text-xs text-danger">{errors.location}</p>
+            <div>
+              <p className="type-label">Meetup</p>
+              {meetupLabel ? (
+                <p className="mt-1 text-sm text-ink-secondary">
+                  {meetupLabel}{" "}
+                  <Link
+                    href="/onboarding/hub?next=/sell"
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    Change hub
+                  </Link>
+                </p>
               ) : (
-                <p className="type-meta">
-                  Meetup can differ from your profile hub.
+                <p className="mt-1 text-sm text-danger">
+                  Set your hub before publishing.{" "}
+                  <Link
+                    href="/onboarding/hub?next=/sell"
+                    className="font-semibold text-primary hover:underline"
+                  >
+                    Choose hub
+                  </Link>
                 </p>
               )}
+              {errors.location ? (
+                <p className="mt-1 text-xs text-danger">{errors.location}</p>
+              ) : null}
             </div>
 
             <Select
