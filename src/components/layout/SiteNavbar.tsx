@@ -107,46 +107,6 @@ export function SiteNavbar({
 
   const visibleLinks = navLinks.filter((item) => !item.auth || user);
 
-  const submitSearch = () => {
-    if (onSearchSubmit) {
-      onSearchSubmit();
-      return;
-    }
-    const next = query.trim();
-    router.push(next ? `/explore?q=${encodeURIComponent(next)}` : "/explore");
-  };
-
-  const searchField = (
-    <form
-      className="w-full"
-      onSubmit={(e) => {
-        e.preventDefault();
-        submitSearch();
-      }}
-    >
-      <label className="relative block">
-        <span className="sr-only">Search listings</span>
-        <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary"
-          aria-hidden
-        />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search for an item"
-          className="field-control h-10 w-full rounded-full border-primary/20 bg-canvas pl-10 pr-[4.75rem] text-sm shadow-none placeholder:text-ink-muted focus:border-primary sm:h-11 sm:pr-24"
-          aria-label="Search listings"
-        />
-        <button
-          type="submit"
-          className="absolute right-1 top-1/2 inline-flex h-8 -translate-y-1/2 items-center rounded-full bg-primary px-3 text-xs font-semibold text-white hover:bg-primary-hover sm:h-9 sm:px-3.5 sm:text-sm"
-        >
-          Search
-        </button>
-      </label>
-    </form>
-  );
-
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-surface/85 backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-2.5 sm:gap-3 sm:py-3 lg:px-6">
