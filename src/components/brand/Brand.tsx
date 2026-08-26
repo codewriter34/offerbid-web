@@ -42,7 +42,7 @@ export function Wordmark({
     <Link
       href={href}
       className={cn(
-        "relative z-10 inline-flex min-h-11 items-center gap-2.5",
+        "relative z-10 inline-flex min-h-11 cursor-pointer items-center gap-2.5",
         light ? "text-white" : "text-ink",
         className,
       )}

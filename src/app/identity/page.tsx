@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Skeleton } from "@/components/ui/EmptyState";
-import { useToast } from "@/components/ui/Toast";
+import { ActionNotice } from "@/components/ui/ActionNotice";
 import {
   fetchIdentity,
   submitIdentity,
@@ -19,6 +19,7 @@ import {
 import { friendlyUploadError } from "@/lib/formatters";
 import { uploadFiles } from "@/lib/uploads";
 import { useAuthStore } from "@/stores/authStore";
+import { popConfetti } from "@/lib/confetti";
 import type { IdKind } from "@/types";
 
 function PhotoSlot({
@@ -65,7 +66,6 @@ function PhotoSlot({
 }
 
 export default function IdentityPage() {
-  const toast = useToast();
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
 
@@ -75,6 +75,7 @@ export default function IdentityPage() {
   const [back, setBack] = useState<File | null>(null);
   const [selfie, setSelfie] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["identity"],
@@ -84,8 +85,9 @@ export default function IdentityPage() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    setNotice(null);
     if (!front || !selfie) {
-      toast.push("Upload ID front and selfie", "error");
+      setNotice("Upload ID front and selfie");
       return;
     }
     setSaving(true);
@@ -99,10 +101,10 @@ export default function IdentityPage() {
         idBackUrl: back ? urls[2] : undefined,
         fullNameOnId: fullNameOnId.trim() || undefined,
       });
-      toast.push("Verification submitted", "success");
+      popConfetti();
       void qc.invalidateQueries({ queryKey: ["identity"] });
     } catch (err) {
-      toast.push(friendlyUploadError(err), "error");
+      setNotice(friendlyUploadError(err));
     } finally {
       setSaving(false);
     }
@@ -156,6 +158,7 @@ export default function IdentityPage() {
               onSubmit={onSubmit}
               className="mt-6 space-y-4 rounded-lg border border-border bg-surface p-4 shadow-rest"
             >
+              <ActionNotice message={notice} tone="error" />
               <Select
                 label="ID type"
                 value={idKind}

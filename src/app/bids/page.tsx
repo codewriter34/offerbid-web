@@ -20,10 +20,11 @@ import { Price } from "@/components/ui/Price";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { SuccessSheet } from "@/components/ui/SuccessSheet";
 import { OfferActions } from "@/components/listings/OfferActions";
-import { useToast } from "@/components/ui/Toast";
+import { ActionNotice } from "@/components/ui/ActionNotice";
 import { counterRespond, fetchMyBids } from "@/features/api/services";
 import { useAuthStore } from "@/stores/authStore";
 import { formatPrice, getErrorMessage, openWhatsApp } from "@/lib/formatters";
+import { popConfetti } from "@/lib/confetti";
 import { statusLabel } from "@/lib/status";
 import { connectSocket, subscribeToListing, unsubscribeFromListing } from "@/lib/socket";
 
@@ -31,13 +32,13 @@ const BID_FILTERS = ["ALL", "PENDING", "COUNTERED", "ACCEPTED"] as const;
 
 export default function MyBidsPage() {
   const router = useRouter();
-  const toast = useToast();
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const [filter, setFilter] = useState<(typeof BID_FILTERS)[number]>("ALL");
   const [successUrl, setSuccessUrl] = useState<string | null | undefined>(
     undefined,
   );
+  const [notice, setNotice] = useState<string | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["my-bids"],
@@ -74,14 +75,15 @@ export default function MyBidsPage() {
     mutationFn: (payload: { bidId: string; action: "ACCEPT" | "REJECT" }) =>
       counterRespond(payload.bidId, { action: payload.action }),
     onSuccess: (bid) => {
+      setNotice(null);
       if (bid.status === "ACCEPTED") {
         setSuccessUrl(bid.whatsappUrl);
       } else {
-        toast.push("Updated", "success");
+        popConfetti();
       }
       void qc.invalidateQueries({ queryKey: ["my-bids"] });
     },
-    onError: (e) => toast.push(getErrorMessage(e), "error"),
+    onError: (e) => setNotice(getErrorMessage(e)),
   });
 
   const activeCount =
@@ -108,6 +110,8 @@ export default function MyBidsPage() {
             </Button>
           }
         />
+
+        <ActionNotice message={notice} tone="error" className="mb-4" />
 
         <div className="mb-3 flex flex-wrap gap-2">
           {BID_FILTERS.map((item) => (

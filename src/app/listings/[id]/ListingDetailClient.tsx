@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/Input";
 import { Dialog } from "@/components/ui/Dialog";
 import { SuccessSheet } from "@/components/ui/SuccessSheet";
 import { OfferActions } from "@/components/listings/OfferActions";
-import { useToast } from "@/components/ui/Toast";
+import { ActionNotice } from "@/components/ui/ActionNotice";
 import { ApiWakeBanner } from "@/components/ui/ApiWakeBanner";
 import {
   contactSeller,
@@ -35,6 +35,7 @@ import {
   getErrorMessage,
   openWhatsApp,
 } from "@/lib/formatters";
+import { popConfetti } from "@/lib/confetti";
 import { useAuthStore } from "@/stores/authStore";
 import {
   connectSocket,
@@ -50,7 +51,6 @@ export default function ListingDetailClient({
 }) {
   const { id } = use(params);
   const user = useAuthStore((s) => s.user);
-  const toast = useToast();
   const qc = useQueryClient();
   const [offer, setOffer] = useState("");
   const [counterByBid, setCounterByBid] = useState<Record<string, string>>({});
@@ -59,6 +59,7 @@ export default function ListingDetailClient({
   const [bidOpen, setBidOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("Suspicious listing");
+  const [notice, setNotice] = useState<string | null>(null);
   const [success, setSuccess] = useState<{
     kind: "offer" | "accepted";
     whatsappUrl?: string | null;
@@ -121,13 +122,14 @@ export default function ListingDetailClient({
   const bidMutation = useMutation({
     mutationFn: () => createBid({ listingId: id, offerAmount: Number(offer) }),
     onSuccess: () => {
+      setNotice(null);
       setOffer("");
       setBidOpen(false);
       setSuccess({ kind: "offer" });
       void qc.invalidateQueries({ queryKey: ["listing-bids", id] });
       void qc.invalidateQueries({ queryKey: ["my-bids"] });
     },
-    onError: (e) => toast.push(getErrorMessage(e), "error"),
+    onError: (e) => setNotice(getErrorMessage(e)),
   });
 
   const respondMutation = useMutation({
@@ -141,29 +143,31 @@ export default function ListingDetailClient({
         counterAmount: payload.counterAmount,
       }),
     onSuccess: (bid) => {
+      setNotice(null);
       if (bid.status === "ACCEPTED") {
         setSuccess({ kind: "accepted", whatsappUrl: bid.whatsappUrl });
       } else {
-        toast.push("Bid updated", "success");
+        popConfetti();
       }
       void qc.invalidateQueries({ queryKey: ["listing-bids", id] });
     },
-    onError: (e) => toast.push(getErrorMessage(e), "error"),
+    onError: (e) => setNotice(getErrorMessage(e)),
   });
 
   const counterRespondMutation = useMutation({
     mutationFn: (payload: { bidId: string; action: "ACCEPT" | "REJECT" }) =>
       counterRespond(payload.bidId, { action: payload.action }),
     onSuccess: (bid) => {
+      setNotice(null);
       if (bid.status === "ACCEPTED") {
         setSuccess({ kind: "accepted", whatsappUrl: bid.whatsappUrl });
       } else {
-        toast.push("Response sent", "success");
+        popConfetti();
       }
       void qc.invalidateQueries({ queryKey: ["listing-bids", id] });
       void qc.invalidateQueries({ queryKey: ["my-bids"] });
     },
-    onError: (e) => toast.push(getErrorMessage(e), "error"),
+    onError: (e) => setNotice(getErrorMessage(e)),
   });
 
   async function shareListing() {
@@ -174,9 +178,10 @@ export default function ListingDetailClient({
         return;
       }
       await navigator.clipboard.writeText(url);
-      toast.push("Link copied", "success");
+      setNotice(null);
+      popConfetti();
     } catch {
-      toast.push("Couldn’t share this listing", "error");
+      setNotice("Couldn’t share this listing");
     }
   }
 
@@ -226,6 +231,7 @@ export default function ListingDetailClient({
       >
         ← Deals in {listing.city ?? "your hub"}
       </Link>
+      <ActionNotice message={notice} tone="error" className="mb-4" />
       <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
         <div>
           <button
@@ -313,10 +319,13 @@ export default function ListingDetailClient({
                   size="sm"
                   disabled={!isActive}
                   onClick={() =>
-                    updateListingStatus(id, "SOLD").then(() => {
-                      toast.push("Marked sold", "success");
-                      void listingQuery.refetch();
-                    })
+                    updateListingStatus(id, "SOLD")
+                      .then(() => {
+                        setNotice(null);
+                        popConfetti();
+                        void listingQuery.refetch();
+                      })
+                      .catch((e) => setNotice(getErrorMessage(e)))
                   }
                 >
                   Mark sold
@@ -326,10 +335,13 @@ export default function ListingDetailClient({
                   size="sm"
                   disabled={!isActive}
                   onClick={() =>
-                    updateListingStatus(id, "CLOSED").then(() => {
-                      toast.push("Listing closed", "success");
-                      void listingQuery.refetch();
-                    })
+                    updateListingStatus(id, "CLOSED")
+                      .then(() => {
+                        setNotice(null);
+                        popConfetti();
+                        void listingQuery.refetch();
+                      })
+                      .catch((e) => setNotice(getErrorMessage(e)))
                   }
                 >
                   Close listing
@@ -378,9 +390,9 @@ export default function ListingDetailClient({
                       try {
                         const url = await contactSeller(id);
                         if (url) openWhatsApp(url);
-                        else toast.push("WhatsApp link unavailable", "error");
+                        else setNotice("WhatsApp link unavailable");
                       } catch (e) {
-                        toast.push(getErrorMessage(e), "error");
+                        setNotice(getErrorMessage(e));
                       }
                     }}
                   >
@@ -503,10 +515,11 @@ export default function ListingDetailClient({
           onClick={async () => {
             try {
               await reportListing(id, reportReason || "Suspicious listing");
-              toast.push("Report submitted", "success");
+              setNotice(null);
+              popConfetti();
               setReportOpen(false);
             } catch (e) {
-              toast.push(getErrorMessage(e), "error");
+              setNotice(getErrorMessage(e));
             }
           }}
         >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -21,35 +21,22 @@ import { cn } from "@/lib/cn";
 import { useQuery } from "@tanstack/react-query";
 import { fetchNotifications } from "@/features/api/services";
 
-const appLinks = [
+const navLinks = [
   { href: "/explore", label: "Explore" },
   { href: "/bids", label: "My bids", auth: true },
   { href: "/selling", label: "Selling", auth: true },
 ];
 
-const homeLinks = [
-  { href: "/explore", label: "Explore" },
-  { href: "/#feed", label: "Live deals" },
-  { href: "/#how", label: "How it works" },
-];
-
 type SiteNavbarProps = {
-  /** Landing home links vs in-app links. Always light app chrome. */
-  home?: boolean;
-  showHub?: boolean;
   showSearch?: boolean;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
-  onSearchSubmit?: () => void;
 };
 
 export function SiteNavbar({
-  home = false,
-  showHub = !home,
   showSearch = false,
   searchValue,
   onSearchChange,
-  onSearchSubmit,
 }: SiteNavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -60,6 +47,8 @@ export function SiteNavbar({
   const [internalQuery, setInternalQuery] = useState("");
   const query = searchValue ?? internalQuery;
   const setQuery = onSearchChange ?? setInternalQuery;
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onExplore = pathname.startsWith("/explore");
 
   const { data: notif } = useQuery({
     queryKey: ["notifications"],
@@ -76,7 +65,47 @@ export function SiteNavbar({
         : selectedCity ?? user?.city ?? "Pick a hub";
 
   const linkClass =
-    "hidden min-h-11 items-center rounded-md px-3 text-sm font-semibold transition lg:inline-flex";
+    "hidden min-h-11 cursor-pointer items-center rounded-md px-3 text-sm font-semibold transition lg:inline-flex";
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const handleSearchChange = (value: string) => {
+    setQuery(value);
+    // Explore is controlled by the page (debounced there). Elsewhere, live-navigate.
+    if (onSearchChange || onExplore) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const next = value.trim();
+      router.replace(next ? `/explore?q=${encodeURIComponent(next)}` : "/explore");
+    }, 320);
+  };
+
+  const searchField = (
+    <div className="flex w-full min-w-0 items-center">
+      <label className="relative min-w-0 flex-1">
+        <span className="sr-only">Search listings</span>
+        <Search
+          className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-primary"
+          aria-hidden
+        />
+        <input
+          value={query}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          placeholder="Search for an item"
+          className="field-control field-control-search h-10 w-full rounded-full border-primary/20 bg-canvas text-sm shadow-none placeholder:text-ink-muted focus:border-primary sm:h-11"
+          aria-label="Search listings"
+          autoComplete="off"
+          enterKeyHint="search"
+        />
+      </label>
+    </div>
+  );
+
+  const visibleLinks = navLinks.filter((item) => !item.auth || user);
 
   const submitSearch = () => {
     if (onSearchSubmit) {
@@ -124,20 +153,18 @@ export function SiteNavbar({
         <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
           <Wordmark href="/" className="relative z-10 shrink-0" />
 
-          {showHub ? (
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  user ? "/onboarding/hub" : "/auth?next=/onboarding/hub",
-                )
-              }
-              className="inline-flex min-h-10 max-w-[7rem] items-center gap-1.5 truncate rounded-md border border-border bg-canvas px-2 text-xs font-semibold text-ink-secondary transition hover:border-primary/30 hover:text-primary sm:max-w-[10rem] sm:px-3"
-            >
-              <MapPin className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{hubLabel}</span>
-            </button>
-          ) : null}
+          <button
+            type="button"
+            onClick={() =>
+              router.push(
+                user ? "/onboarding/hub" : "/auth?next=/onboarding/hub",
+              )
+            }
+            className="inline-flex min-h-10 max-w-[7rem] cursor-pointer items-center gap-1.5 truncate rounded-md border border-border bg-canvas px-2 text-xs font-semibold text-ink-secondary transition hover:border-primary/30 hover:text-primary sm:max-w-[10rem] sm:px-3"
+          >
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{hubLabel}</span>
+          </button>
         </div>
 
         {showSearch ? (
@@ -149,64 +176,46 @@ export function SiteNavbar({
         )}
 
         <nav className="hidden shrink-0 items-center gap-1 md:flex">
-          {home
-            ? homeLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    linkClass,
-                    "text-ink-secondary hover:bg-canvas hover:text-ink",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))
-            : appLinks.map((item) => {
-                if (item.auth && !user) return null;
-                const active = pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      linkClass,
-                      active
-                        ? "bg-primary/10 text-primary"
-                        : "text-ink-secondary hover:bg-canvas hover:text-ink",
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
+          {visibleLinks.map((item) => {
+            const active = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  linkClass,
+                  active
+                    ? "bg-primary/10 text-primary"
+                    : "text-ink-secondary hover:bg-canvas hover:text-ink",
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
 
           {user ? (
             <>
-              {!home ? (
-                <>
-                  <Link
-                    href="/notifications"
-                    className="relative inline-flex h-11 w-11 items-center justify-center rounded-md text-ink-secondary hover:bg-canvas hover:text-ink"
-                    aria-label="Notifications"
-                  >
-                    <Bell className="h-5 w-5" />
-                    {(notif?.unreadCount ?? 0) > 0 ? (
-                      <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-danger" />
-                    ) : null}
-                  </Link>
-                  <Button
-                    className="hidden sm:inline-flex"
-                    onClick={() => router.push("/sell")}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Sell
-                  </Button>
-                </>
-              ) : null}
+              <Link
+                href="/notifications"
+                className="relative inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-ink-secondary hover:bg-canvas hover:text-ink"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                {(notif?.unreadCount ?? 0) > 0 ? (
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-danger" />
+                ) : null}
+              </Link>
+              <Button
+                className="hidden sm:inline-flex"
+                onClick={() => router.push("/sell")}
+              >
+                <Plus className="h-4 w-4" />
+                Sell
+              </Button>
               <Link
                 href="/profile"
-                className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-border bg-canvas"
+                className="flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-border bg-canvas"
                 aria-label="Profile"
               >
                 {user.avatarUrl ? (
@@ -225,7 +234,7 @@ export function SiteNavbar({
           ) : (
             <Link
               href="/auth"
-              className="inline-flex min-h-11 items-center rounded-md bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
+              className="inline-flex min-h-11 cursor-pointer items-center rounded-md bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover"
             >
               Log in
             </Link>
@@ -236,7 +245,7 @@ export function SiteNavbar({
           {user ? (
             <Link
               href="/profile"
-              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-border bg-canvas"
+              className="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-border bg-canvas"
               aria-label="Profile"
             >
               {user.avatarUrl ? (
@@ -254,14 +263,14 @@ export function SiteNavbar({
           ) : (
             <Link
               href="/auth"
-              className="inline-flex min-h-10 items-center rounded-md bg-primary px-3 text-sm font-semibold text-white"
+              className="inline-flex min-h-10 cursor-pointer items-center rounded-md bg-primary px-3 text-sm font-semibold text-white"
             >
               Log in
             </Link>
           )}
           <button
             type="button"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-md text-ink"
+            className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-ink"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
@@ -280,30 +289,21 @@ export function SiteNavbar({
       {menuOpen ? (
         <nav className="border-t border-border bg-surface px-4 py-3 md:hidden">
           <div className="mx-auto flex max-w-7xl flex-col">
-            {(home
-              ? [
-                  ...homeLinks,
-                  {
-                    href: user ? "/sell" : "/auth?next=/sell",
-                    label: "Start selling",
-                  },
-                ]
-              : [
-                  { href: "/explore", label: "Explore" },
-                  ...(user
-                    ? [
-                        { href: "/bids", label: "My bids" },
-                        { href: "/selling", label: "Selling" },
-                        { href: "/sell", label: "Sell an item" },
-                        { href: "/notifications", label: "Notifications" },
-                      ]
-                    : [{ href: "/auth", label: "Log in" }]),
-                ]
-            ).map((item) => (
+            {[
+              { href: "/explore", label: "Explore" },
+              ...(user
+                ? [
+                    { href: "/bids", label: "My bids" },
+                    { href: "/selling", label: "Selling" },
+                    { href: "/sell", label: "Sell an item" },
+                    { href: "/notifications", label: "Notifications" },
+                  ]
+                : [{ href: "/auth", label: "Log in" }]),
+            ].map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="inline-flex min-h-11 items-center rounded-md px-3 text-sm font-semibold text-ink hover:bg-canvas"
+                className="inline-flex min-h-11 cursor-pointer items-center rounded-md px-3 text-sm font-semibold text-ink hover:bg-canvas"
                 onClick={() => setMenuOpen(false)}
               >
                 {item.label}

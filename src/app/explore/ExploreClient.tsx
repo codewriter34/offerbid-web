@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, SlidersHorizontal } from "lucide-react";
 import { AppShell } from "@/components/layout/Shells";
 import {
@@ -58,6 +58,7 @@ export default function ExploreClient() {
   const countries = useHubStore((s) => s.countries);
   const setSelection = useHubStore((s) => s.setSelection);
   const user = useAuthStore((s) => s.user);
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialQ = searchParams.get("q") ?? "";
 
@@ -76,6 +77,22 @@ export default function ExploreClient() {
     setSearch(next);
     setQ(next);
   }, [searchParams]);
+
+  // Live search-as-you-type (debounced) — no Search button required.
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      const next = search.trim();
+      setQ(next);
+      const current = searchParams.get("q") ?? "";
+      if (next === current) return;
+      const params = new URLSearchParams(searchParams.toString());
+      if (next) params.set("q", next);
+      else params.delete("q");
+      const qs = params.toString();
+      router.replace(qs ? `/explore?${qs}` : "/explore", { scroll: false });
+    }, 320);
+    return () => window.clearTimeout(handle);
+  }, [search, router, searchParams]);
 
   const cities = useMemo(() => allCities(countries), [countries]);
   const neighborhoods = useMemo(() => {
@@ -106,7 +123,6 @@ export default function ExploreClient() {
   const rawListings = query.data?.pages.flatMap((page) => page.listings) ?? [];
   const total = query.data?.pages.at(-1)?.total ?? rawListings.length;
   const listings = applyClientFilters(rawListings, sort, minPrice, maxPrice);
-  const runSearch = () => setQ(search.trim());
   const placeLabel = location && city ? `${location}, ${city}` : city;
   const filterCount = [city, location, minPrice, maxPrice, sort !== "newest"].filter(
     Boolean,
@@ -182,7 +198,6 @@ export default function ExploreClient() {
     <AppShell
       searchValue={search}
       onSearchChange={setSearch}
-      onSearchSubmit={runSearch}
     >
       <PageHeader
         title={city ? `Deals in ${city}` : "All deals"}
