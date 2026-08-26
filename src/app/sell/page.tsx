@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { useToast } from "@/components/ui/Toast";
+import { ActionNotice } from "@/components/ui/ActionNotice";
 import {
   createListing,
   fetchIdentity,
@@ -27,7 +27,7 @@ import {
   MAX_ACTIVE_LISTINGS_VERIFIED,
 } from "@/lib/env";
 import { friendlyUploadError } from "@/lib/formatters";
-import { celebrateSuccess } from "@/lib/confetti";
+import { popConfetti } from "@/lib/confetti";
 import { uploadFiles } from "@/lib/uploads";
 import { currencyForCountry } from "@/lib/hubs";
 import {
@@ -47,7 +47,6 @@ async function compressImage(file: File) {
 
 export default function SellPage() {
   const router = useRouter();
-  const toast = useToast();
   const user = useAuthStore((s) => s.user);
   const categories = useHubStore((s) => s.categories);
   const countries = useHubStore((s) => s.countries);
@@ -62,6 +61,7 @@ export default function SellPage() {
   const [previews, setPreviews] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [notice, setNotice] = useState<string | null>(null);
 
   const listingsQuery = useQuery({
     queryKey: ["my-listings"],
@@ -139,16 +139,16 @@ export default function SellPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!user) return;
+    setNotice(null);
     if (atLimit) {
-      toast.push(
+      setNotice(
         `You can have up to ${listingCap} active listings. Verify identity to raise the cap.`,
-        "error",
       );
       return;
     }
     if (!validate()) return;
     if (meetupLocation.length < 2) {
-      toast.push("Set your hub before publishing a listing.", "error");
+      setNotice("Set your hub before publishing a listing.");
       router.push("/onboarding/hub?next=/sell");
       return;
     }
@@ -169,11 +169,10 @@ export default function SellPage() {
         location: meetupLocation,
         images: urls,
       });
-      toast.push("Listing published", "success");
-      celebrateSuccess();
+      popConfetti();
       router.push(`/listings/${listing.id}`);
     } catch (err) {
-      toast.push(friendlyUploadError(err), "error");
+      setNotice(friendlyUploadError(err));
     } finally {
       setSaving(false);
     }
@@ -212,6 +211,7 @@ export default function SellPage() {
           ) : null}
 
           <form onSubmit={onSubmit} className="space-y-6">
+            <ActionNotice message={notice} tone="error" />
             <div>
               <p className="type-label mb-2">
                 Photos (up to {MAX_LISTING_IMAGES})

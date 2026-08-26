@@ -9,7 +9,8 @@ import { PasswordRules } from "@/components/auth/PasswordRules";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { useToast } from "@/components/ui/Toast";
+import { ActionNotice } from "@/components/ui/ActionNotice";
+import { popConfetti } from "@/lib/confetti";
 import {
   forgotPassword,
   loginWithEmail,
@@ -21,6 +22,10 @@ import {
 } from "@/features/auth/authService";
 import { useAuthStore } from "@/stores/authStore";
 import { COUNTRY_OPTIONS, GOOGLE_CLIENT_ID } from "@/lib/env";
+import {
+  firebaseIdTokenFromGoogleCredential,
+  isFirebaseWebConfigured,
+} from "@/lib/firebase";
 import { getAuthErrorCode, getErrorMessage } from "@/lib/formatters";
 import {
   emailTypingHint,
@@ -33,6 +38,9 @@ import {
 import type { Country, PrimaryIntent } from "@/types";
 
 type Mode = "login" | "signup" | "otp" | "forgot" | "reset";
+
+/** Flip to true when Google Sign-In UI should ship again. */
+const SHOW_GOOGLE_AUTH = false;
 
 declare global {
   interface Window {
@@ -76,12 +84,15 @@ export default function AuthClient() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/explore";
-  const toast = useToast();
   const setUser = useAuthStore((s) => s.setUser);
   const user = useAuthStore((s) => s.user);
 
   const [mode, setMode] = useState<Mode>("login");
   const [loading, setLoading] = useState(false);
+  const [formNotice, setFormNotice] = useState<{
+    message: string;
+    tone: "error" | "info" | "success";
+  } | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -127,6 +138,7 @@ export default function AuthClient() {
   }, [otpWait]);
 
   useEffect(() => {
+    if (!SHOW_GOOGLE_AUTH) return;
     if (!GOOGLE_CLIENT_ID) return;
     if (mode !== "login" && mode !== "signup") return;
 
@@ -141,14 +153,26 @@ export default function AuthClient() {
         callback: async (response) => {
           try {
             setLoading(true);
-            const session = await signInWithGoogleIdToken(response.credential);
+            if (!response.credential) {
+              throw new Error("Google did not return a credential");
+            }
+            if (!isFirebaseWebConfigured()) {
+              throw new Error(
+                "Firebase web config missing. Add NEXT_PUBLIC_FIREBASE_* to .env and restart.",
+              );
+            }
+            // Nest verifies Firebase ID tokens — not raw GIS credentials.
+            const firebaseIdToken = await firebaseIdTokenFromGoogleCredential(
+              response.credential,
+            );
+            const session = await signInWithGoogleIdToken(firebaseIdToken);
             setUser(session.user);
-            toast.push("Welcome back", "success");
+            popConfetti();
             router.replace(
               session.user.profileComplete ? next : "/onboarding/hub",
             );
           } catch (e) {
-            toast.push(getErrorMessage(e), "error");
+            setFormNotice({ message: getErrorMessage(e), tone: "error" });
           } finally {
             setLoading(false);
           }
@@ -187,10 +211,11 @@ export default function AuthClient() {
     return () => {
       cancelled = true;
     };
-  }, [mode, next, router, setUser, toast]);
+  }, [mode, next, router, setUser]);
 
   function switchMode(nextMode: Mode) {
     setMode(nextMode);
+    setFormNotice(null);
     if (nextMode === "login") {
       setConfirmPassword("");
       setAgreedToTerms(false);
@@ -203,63 +228,82 @@ export default function AuthClient() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    setFormNotice(null);
 
     if (!isValidEmail(email)) {
-      toast.push(emailError ?? "Enter a valid email", "error");
+      setFormNotice({
+        message: emailError ?? "Enter a valid email",
+        tone: "error",
+      });
       return;
     }
 
     if (mode === "login") {
       if (password.length < 8) {
-        toast.push("Password must be at least 8 characters", "error");
+        setFormNotice({
+          message: "Password must be at least 8 characters",
+          tone: "error",
+        });
         return;
       }
     }
 
     if (mode === "signup") {
       if (fullName.trim().length < 2) {
-        toast.push("Enter your full name", "error");
+        setFormNotice({ message: "Enter your full name", tone: "error" });
         return;
       }
       if (!isValidLocalPhone(phone, country)) {
-        toast.push(
-          phoneError ?? phoneTypingHint(phone, country) ?? "Enter a WhatsApp number",
-          "error",
-        );
+        setFormNotice({
+          message:
+            phoneError ??
+            phoneTypingHint(phone, country) ??
+            "Enter a WhatsApp number",
+          tone: "error",
+        });
         return;
       }
       const passwordError = isValidPassword(password);
       if (passwordError) {
-        toast.push(passwordError, "error");
+        setFormNotice({ message: passwordError, tone: "error" });
         return;
       }
       if (confirmPasswordError) {
-        toast.push(confirmPasswordError, "error");
+        setFormNotice({ message: confirmPasswordError, tone: "error" });
         return;
       }
       if (!agreedToTerms) {
-        toast.push("Please agree to the terms to continue", "error");
+        setFormNotice({
+          message: "Please agree to the terms to continue",
+          tone: "error",
+        });
         return;
       }
     }
 
     if (mode === "otp" && !/^\d{6}$/.test(otp)) {
-      toast.push("Enter the 6-digit code from your email", "error");
+      setFormNotice({
+        message: "Enter the 6-digit code from your email",
+        tone: "error",
+      });
       return;
     }
 
     if (mode === "reset") {
       if (!/^\d{6}$/.test(otp)) {
-        toast.push("Enter the 6-digit reset code", "error");
+        setFormNotice({
+          message: "Enter the 6-digit reset code",
+          tone: "error",
+        });
         return;
       }
       const passwordError = isValidPassword(newPassword);
       if (passwordError) {
-        toast.push(passwordError, "error");
+        setFormNotice({ message: passwordError, tone: "error" });
         return;
       }
       if (confirmNewPasswordError) {
-        toast.push(confirmNewPasswordError, "error");
+        setFormNotice({ message: confirmNewPasswordError, tone: "error" });
         return;
       }
     }
@@ -269,7 +313,7 @@ export default function AuthClient() {
       if (mode === "login") {
         const session = await loginWithEmail({ email: email.trim(), password });
         setUser(session.user);
-        toast.push("Welcome back", "success");
+        popConfetti();
         router.replace(session.user.profileComplete ? next : "/onboarding/hub");
       } else if (mode === "signup") {
         await registerAccount({
@@ -281,7 +325,11 @@ export default function AuthClient() {
           countryCode,
           primaryIntent,
         });
-        toast.push("Check your email for the verification code", "success");
+        setFormNotice({
+          message: "Check your email for the verification code",
+          tone: "success",
+        });
+        popConfetti();
         setMode("otp");
         setOtpWait(60);
       } else if (mode === "otp") {
@@ -291,11 +339,14 @@ export default function AuthClient() {
           purpose: "EMAIL_VERIFY",
         });
         setUser(session.user);
-        toast.push("Email verified", "success");
+        popConfetti();
         router.replace("/onboarding/hub");
       } else if (mode === "forgot") {
         await forgotPassword(email.trim());
-        toast.push("If that email is registered, we sent a reset code", "success");
+        setFormNotice({
+          message: "If that email is registered, we sent a reset code",
+          tone: "success",
+        });
         setMode("reset");
         setOtpWait(60);
       } else if (mode === "reset") {
@@ -305,18 +356,21 @@ export default function AuthClient() {
           password: newPassword,
         });
         setUser(session.user);
-        toast.push("Password updated", "success");
+        popConfetti();
         router.replace(session.user.profileComplete ? next : "/onboarding/hub");
       }
     } catch (err) {
       const code = getAuthErrorCode(err);
       if (code === "EMAIL_NOT_VERIFIED" && mode === "login") {
-        toast.push("Verify your email with the code we sent", "info");
+        setFormNotice({
+          message: "Verify your email with the code we sent",
+          tone: "info",
+        });
         setMode("otp");
         setOtpWait(60);
         return;
       }
-      toast.push(getErrorMessage(err), "error");
+      setFormNotice({ message: getErrorMessage(err), tone: "error" });
     } finally {
       setLoading(false);
     }
@@ -364,7 +418,10 @@ export default function AuthClient() {
           {mode === "reset" && "Choose a new password"}
           </h1>
           <p className="mt-1 text-sm text-ink-muted">
-          {mode === "login" && "Log in with email or Google — same account as the app."}
+          {mode === "login" &&
+            (SHOW_GOOGLE_AUTH
+              ? "Log in with email or Google — same account as the app."
+              : "Log in with email — same account as the app.")}
           {mode === "signup" &&
             "WhatsApp is required so accepted deals can reach you."}
           {mode === "otp" &&
@@ -373,10 +430,10 @@ export default function AuthClient() {
           {mode === "reset" && "Enter the code from your email and choose a new password."}
           </p>
 
-          {mode === "login" || mode === "signup" ? (
+          {SHOW_GOOGLE_AUTH && (mode === "login" || mode === "signup") ? (
           <>
             <div className="mt-6 flex min-h-[44px] justify-center">
-              {GOOGLE_CLIENT_ID ? (
+              {GOOGLE_CLIENT_ID && isFirebaseWebConfigured() ? (
                 <div
                   id="google-btn"
                   className="flex w-full max-w-[320px] justify-center"
@@ -386,7 +443,11 @@ export default function AuthClient() {
                   type="button"
                   disabled
                   className="inline-flex h-11 w-full max-w-[320px] items-center justify-center gap-2 rounded-md border border-border bg-surface px-4 text-sm font-semibold text-ink-secondary"
-                  title="Set NEXT_PUBLIC_GOOGLE_CLIENT_ID to enable Google auth"
+                  title={
+                    !GOOGLE_CLIENT_ID
+                      ? "Set NEXT_PUBLIC_GOOGLE_CLIENT_ID to enable Google auth"
+                      : "Set NEXT_PUBLIC_FIREBASE_API_KEY and APP_ID (same Firebase project as the API)"
+                  }
                 >
                   <svg
                     aria-hidden
@@ -430,6 +491,10 @@ export default function AuthClient() {
           className="space-y-3 rounded-lg border border-border bg-canvas p-4"
           onSubmit={onSubmit}
         >
+          <ActionNotice
+            message={formNotice?.message}
+            tone={formNotice?.tone ?? "error"}
+          />
           <Input
             label="Email"
             type="email"
@@ -554,12 +619,18 @@ export default function AuthClient() {
                   I agree to the{" "}
                   <Link
                     href="/terms"
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="font-semibold text-primary hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
                     terms and conditions
+                  </Link>
+                  {" "}and{" "}
+                  <Link
+                    href="/privacy"
+                    className="font-semibold text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    privacy policy
                   </Link>
                 </span>
               </label>
@@ -654,9 +725,13 @@ export default function AuthClient() {
                 try {
                   await resendOtp(email.trim(), "EMAIL_VERIFY");
                   setOtpWait(60);
-                  toast.push("Code resent", "success");
+                  setFormNotice({ message: "Code resent", tone: "success" });
+                  popConfetti();
                 } catch (e) {
-                  toast.push(getErrorMessage(e), "error");
+                  setFormNotice({
+                    message: getErrorMessage(e),
+                    tone: "error",
+                  });
                 }
               }}
             >

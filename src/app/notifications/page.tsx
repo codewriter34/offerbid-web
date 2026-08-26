@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, Ban, Check, Gavel, MessageCircle, Timer } from "lucide-react";
@@ -13,7 +13,7 @@ import {
   NotifRowSkeleton,
 } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { useToast } from "@/components/ui/Toast";
+import { ActionNotice } from "@/components/ui/ActionNotice";
 import {
   fetchNotifications,
   markAllNotificationsRead,
@@ -24,6 +24,7 @@ import { formatRelativeTime, getErrorMessage } from "@/lib/formatters";
 import { connectSocket } from "@/lib/socket";
 import { cn } from "@/lib/cn";
 import { notificationCopy } from "@/lib/status";
+import { popConfetti } from "@/lib/confetti";
 import type { NotificationType } from "@/types";
 
 function typeIcon(type: NotificationType) {
@@ -37,9 +38,9 @@ function typeIcon(type: NotificationType) {
 
 export default function NotificationsPage() {
   const router = useRouter();
-  const toast = useToast();
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["notifications"],
@@ -60,10 +61,11 @@ export default function NotificationsPage() {
   const markAll = useMutation({
     mutationFn: markAllNotificationsRead,
     onSuccess: () => {
+      setNotice(null);
       void qc.invalidateQueries({ queryKey: ["notifications"] });
-      toast.push("All marked read", "success");
+      popConfetti();
     },
-    onError: (e) => toast.push(getErrorMessage(e), "error"),
+    onError: (e) => setNotice(getErrorMessage(e)),
   });
 
   const unreadCount = data?.unreadCount ?? 0;
@@ -90,6 +92,8 @@ export default function NotificationsPage() {
             ) : null
           }
         />
+
+        <ActionNotice message={notice} tone="error" className="mb-4" />
 
         {isLoading ? (
           <div className="space-y-3">

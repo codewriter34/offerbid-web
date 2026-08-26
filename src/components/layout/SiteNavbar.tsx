@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -31,14 +31,12 @@ type SiteNavbarProps = {
   showSearch?: boolean;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
-  onSearchSubmit?: () => void;
 };
 
 export function SiteNavbar({
   showSearch = false,
   searchValue,
   onSearchChange,
-  onSearchSubmit,
 }: SiteNavbarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -49,6 +47,8 @@ export function SiteNavbar({
   const [internalQuery, setInternalQuery] = useState("");
   const query = searchValue ?? internalQuery;
   const setQuery = onSearchChange ?? setInternalQuery;
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onExplore = pathname.startsWith("/explore");
 
   const { data: notif } = useQuery({
     queryKey: ["notifications"],
@@ -67,44 +67,42 @@ export function SiteNavbar({
   const linkClass =
     "hidden min-h-11 cursor-pointer items-center rounded-md px-3 text-sm font-semibold transition lg:inline-flex";
 
-  const submitSearch = () => {
-    if (onSearchSubmit) {
-      onSearchSubmit();
-      return;
-    }
-    const next = query.trim();
-    router.push(next ? `/explore?q=${encodeURIComponent(next)}` : "/explore");
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const handleSearchChange = (value: string) => {
+    setQuery(value);
+    // Explore is controlled by the page (debounced there). Elsewhere, live-navigate.
+    if (onSearchChange || onExplore) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const next = value.trim();
+      router.replace(next ? `/explore?q=${encodeURIComponent(next)}` : "/explore");
+    }, 320);
   };
 
   const searchField = (
-    <form
-      className="flex w-full min-w-0 items-center gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        submitSearch();
-      }}
-    >
+    <div className="flex w-full min-w-0 items-center">
       <label className="relative min-w-0 flex-1">
         <span className="sr-only">Search listings</span>
         <Search
-          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-primary"
+          className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-primary"
           aria-hidden
         />
         <input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Search for an item"
-          className="field-control h-10 w-full rounded-full border-primary/20 bg-canvas pl-10 pr-3 text-sm shadow-none placeholder:text-ink-muted focus:border-primary sm:h-11"
+          className="field-control field-control-search h-10 w-full rounded-full border-primary/20 bg-canvas text-sm shadow-none placeholder:text-ink-muted focus:border-primary sm:h-11"
           aria-label="Search listings"
+          autoComplete="off"
+          enterKeyHint="search"
         />
       </label>
-      <button
-        type="submit"
-        className="inline-flex h-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-white hover:bg-primary-hover sm:h-11"
-      >
-        Search
-      </button>
-    </form>
+    </div>
   );
 
   const visibleLinks = navLinks.filter((item) => !item.auth || user);

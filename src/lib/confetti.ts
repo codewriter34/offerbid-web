@@ -1,7 +1,10 @@
 import confetti from "canvas-confetti";
 
-/** Light celebration for successful deal / listing moments. */
-export function celebrateSuccess() {
+/**
+ * Universal celebration used across the app (sell, deals, auth, profile, etc.).
+ * Safe to call from any client success path. Respects reduced-motion.
+ */
+export function popConfetti() {
   if (typeof window === "undefined") return;
 
   const prefersReduced =
@@ -16,3 +19,6 @@ export function celebrateSuccess() {
     colors: ["#2070C8", "#3B8BE0", "#F5C84C", "#FFFFFF"],
   });
 }
+
+/** @deprecated Prefer popConfetti — kept as an alias for older call sites. */
+export const celebrateSuccess = popConfetti;

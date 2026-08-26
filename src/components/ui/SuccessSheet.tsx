@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { Dialog } from "@/components/ui/Dialog";
-import { celebrateSuccess } from "@/lib/confetti";
+import { popConfetti } from "@/lib/confetti";
 
 export function SuccessSheet({
   open,
@@ -20,7 +20,7 @@ export function SuccessSheet({
   celebrate?: boolean;
 }) {
   useEffect(() => {
-    if (open && celebrate) celebrateSuccess();
+    if (open && celebrate) popConfetti();
   }, [open, celebrate]);
 
   return (

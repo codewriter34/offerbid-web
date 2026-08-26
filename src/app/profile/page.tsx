@@ -23,7 +23,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ListingTile } from "@/components/listings/ListingTile";
 import { ListingSkeleton, ProfileSkeleton } from "@/components/ui/EmptyState";
-import { useToast } from "@/components/ui/Toast";
+import { ActionNotice } from "@/components/ui/ActionNotice";
 import { logout, updateAvatar } from "@/features/auth/authService";
 import {
   fetchIdentity,
@@ -35,6 +35,7 @@ import {
 import { useAuthStore } from "@/stores/authStore";
 import { useHubStore } from "@/stores/hubStore";
 import { friendlyUploadError } from "@/lib/formatters";
+import { popConfetti } from "@/lib/confetti";
 import { disconnectSocket } from "@/lib/socket";
 import { effectiveWhatsAppPhone } from "@/lib/whatsappPhone";
 import { statusLabel } from "@/lib/status";
@@ -152,7 +153,6 @@ function MenuRow({
 
 export default function ProfilePage() {
   const router = useRouter();
-  const toast = useToast();
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const clear = useAuthStore((s) => s.clear);
@@ -162,6 +162,7 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const listingsQuery = useQuery({
     queryKey: ["my-listings"],
@@ -217,6 +218,8 @@ export default function ProfilePage() {
               }
             />
 
+            <ActionNotice message={notice} tone="error" />
+
             <section className="rounded-lg border border-border bg-surface p-4 shadow-rest">
               <div className="flex items-start gap-4">
                 <button
@@ -249,14 +252,15 @@ export default function ProfilePage() {
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
+                    setNotice(null);
                     setUploading(true);
                     try {
                       const url = await uploadFile(file, "AVATAR");
                       const updated = await updateAvatar(url);
                       setUser(updated);
-                      toast.push("Avatar updated", "success");
+                      popConfetti();
                     } catch (err) {
-                      toast.push(friendlyUploadError(err), "error");
+                      setNotice(friendlyUploadError(err));
                     } finally {
                       setUploading(false);
                     }

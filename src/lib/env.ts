@@ -13,6 +13,16 @@ export const SOCKET_URL =
 export const GOOGLE_CLIENT_ID =
   process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
+/** Firebase web app (same project as Nest Admin SDK). Public client config. */
+export const FIREBASE_API_KEY =
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "";
+export const FIREBASE_AUTH_DOMAIN =
+  process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "";
+export const FIREBASE_PROJECT_ID =
+  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? "";
+export const FIREBASE_APP_ID =
+  process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? "";
+
 /** Canonical public origin. Netlify sets `URL` at build/runtime. */
 export const APP_URL = stripTrailingSlash(
   process.env.NEXT_PUBLIC_APP_URL ??

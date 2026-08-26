@@ -21,7 +21,7 @@ import { Price } from "@/components/ui/Price";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { SuccessSheet } from "@/components/ui/SuccessSheet";
 import { OfferActions } from "@/components/listings/OfferActions";
-import { useToast } from "@/components/ui/Toast";
+import { ActionNotice } from "@/components/ui/ActionNotice";
 import {
   fetchListingBids,
   fetchMyListings,
@@ -29,6 +29,7 @@ import {
 } from "@/features/api/services";
 import { useAuthStore } from "@/stores/authStore";
 import { getErrorMessage, openWhatsApp } from "@/lib/formatters";
+import { popConfetti } from "@/lib/confetti";
 import { statusLabel } from "@/lib/status";
 import { connectSocket } from "@/lib/socket";
 
@@ -36,7 +37,6 @@ const BID_FILTERS = ["ALL", "PENDING", "COUNTERED", "ACCEPTED"] as const;
 
 export default function SellingPage() {
   const router = useRouter();
-  const toast = useToast();
   const qc = useQueryClient();
   const user = useAuthStore((s) => s.user);
   const [counterByBid, setCounterByBid] = useState<Record<string, string>>({});
@@ -44,6 +44,7 @@ export default function SellingPage() {
   const [successUrl, setSuccessUrl] = useState<string | null | undefined>(
     undefined,
   );
+  const [notice, setNotice] = useState<string | null>(null);
 
   const listingsQuery = useQuery({
     queryKey: ["my-listings"],
@@ -103,14 +104,15 @@ export default function SellingPage() {
         counterAmount: payload.counterAmount,
       }),
     onSuccess: (bid) => {
+      setNotice(null);
       if (bid.status === "ACCEPTED") {
         setSuccessUrl(bid.whatsappUrl);
       } else {
-        toast.push("Updated", "success");
+        popConfetti();
       }
       void qc.invalidateQueries({ queryKey: ["incoming-bids"] });
     },
-    onError: (e) => toast.push(getErrorMessage(e), "error"),
+    onError: (e) => setNotice(getErrorMessage(e)),
   });
 
   const pendingCount =
@@ -130,6 +132,8 @@ export default function SellingPage() {
         }
         action={<Button onClick={() => router.push("/sell")}>New listing</Button>}
       />
+
+      <ActionNotice message={notice} tone="error" className="mb-6" />
 
       <section className="mb-10">
         <h2 className="type-section mb-3 text-ink">Your listings</h2>

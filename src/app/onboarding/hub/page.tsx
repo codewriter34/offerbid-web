@@ -7,11 +7,12 @@ import { HubFields } from "@/components/hub/HubFields";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { useToast } from "@/components/ui/Toast";
+import { ActionNotice } from "@/components/ui/ActionNotice";
 import { completeProfile } from "@/features/auth/authService";
 import { useAuthStore } from "@/stores/authStore";
 import { useHubStore } from "@/stores/hubStore";
 import { getErrorMessage } from "@/lib/formatters";
+import { popConfetti } from "@/lib/confetti";
 import { assertRealPlace, type HubDraft } from "@/lib/hubs";
 import {
   setLocalWhatsAppPhone,
@@ -23,7 +24,6 @@ import type { Country } from "@/types";
 
 export default function HubOnboardingPage() {
   const router = useRouter();
-  const toast = useToast();
   const user = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
   const setUser = useAuthStore((s) => s.setUser);
@@ -43,6 +43,7 @@ export default function HubOnboardingPage() {
     () => effectiveWhatsAppPhone(user?.phone) ?? "",
   );
   const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const needsWhatsApp = !user?.phone?.trim();
 
   useEffect(() => {
@@ -53,21 +54,21 @@ export default function HubOnboardingPage() {
     const city = hub.city === otherLabel ? hub.customCity : hub.city;
     const location =
       hub.location === otherLabel ? hub.customLocation : hub.location;
+    setNotice(null);
     const placeErr = assertRealPlace(city, location, otherLabel);
     if (placeErr) {
-      toast.push(placeErr, "error");
+      setNotice(placeErr);
       return;
     }
     if (address.trim().length < 2) {
-      toast.push("Add a meetup address or landmark", "error");
+      setNotice("Add a meetup address or landmark");
       return;
     }
     if (needsWhatsApp) {
       const country = (hub.country === "NIGERIA" ? "NIGERIA" : "CAMEROON") as Country;
       if (!isValidLocalPhone(whatsapp, country)) {
-        toast.push(
+        setNotice(
           phoneTypingHint(whatsapp, country) ?? "Enter a WhatsApp number",
-          "error",
         );
         return;
       }
@@ -93,14 +94,14 @@ export default function HubOnboardingPage() {
       if (needsWhatsApp) {
         setLocalWhatsAppPhone(`${countryCode}${whatsapp.replace(/\D/g, "")}`);
       }
-      toast.push("Hub saved", "success");
+      popConfetti();
       if (updated.primaryIntent === "SELL") {
         router.replace("/sell");
       } else {
         router.replace("/explore");
       }
     } catch (e) {
-      toast.push(getErrorMessage(e), "error");
+      setNotice(getErrorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -115,6 +116,7 @@ export default function HubOnboardingPage() {
         />
 
         <div className="space-y-4 rounded-lg border border-border bg-surface p-4 shadow-rest">
+          <ActionNotice message={notice} tone="error" />
           <HubFields draft={hub} onChange={setHub} showCountry numbered />
           <Input
             label="Meetup hint / address area"

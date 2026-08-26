@@ -2,7 +2,6 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ToastProvider } from "@/components/ui/Toast";
 import { useAuthStore } from "@/stores/authStore";
 import { useHubStore } from "@/stores/hubStore";
 import { restoreSession } from "@/features/auth/authService";
@@ -82,9 +81,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={client}>
-      <ToastProvider>
-        <AuthBootstrap>{children}</AuthBootstrap>
-      </ToastProvider>
+      <AuthBootstrap>{children}</AuthBootstrap>
     </QueryClientProvider>
   );
 }

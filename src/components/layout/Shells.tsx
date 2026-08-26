@@ -7,12 +7,10 @@ export function AppShell({
   children,
   searchValue,
   onSearchChange,
-  onSearchSubmit,
 }: {
   children: React.ReactNode;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
-  onSearchSubmit?: () => void;
 }) {
   return (
     <div className="ob-atmosphere min-h-screen min-h-dvh">
@@ -20,7 +18,6 @@ export function AppShell({
         showSearch
         searchValue={searchValue}
         onSearchChange={onSearchChange}
-        onSearchSubmit={onSearchSubmit}
       />
 
       <main className="mx-auto max-w-7xl px-4 py-6 lg:px-6 lg:py-8">
