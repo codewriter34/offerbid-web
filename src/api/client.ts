@@ -12,6 +12,13 @@ import {
   storeTokens,
 } from "@/lib/tokenStorage";
 
+declare module "axios" {
+  interface AxiosRequestConfig {
+    skipAuthRefresh?: boolean;
+    skipAuthHeader?: boolean;
+  }
+}
+
 const apiClient = axios.create({
   baseURL: API_CONFIG.BASE_URL,
   timeout: API_CONFIG.TIMEOUT,
@@ -50,6 +57,10 @@ function shouldRetryNetwork(error: AxiosError) {
 }
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  if (config.skipAuthHeader) {
+    delete config.headers.Authorization;
+    return config;
+  }
   const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -79,7 +90,22 @@ apiClient.interceptors.response.use(
       }
     }
 
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    if (
+      originalRequest.skipAuthRefresh ||
+      error.response?.status !== 401 ||
+      originalRequest._retry
+    ) {
+      return Promise.reject(error);
+    }
+
+    const refreshTokenValue = getRefreshToken();
+    if (!refreshTokenValue) {
+      if (getAccessToken()) {
+        clearTokens();
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new Event("offerbid:session-cleared"));
+        }
+      }
       return Promise.reject(error);
     }
 
@@ -96,9 +122,6 @@ apiClient.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const refreshTokenValue = getRefreshToken();
-      if (!refreshTokenValue) throw new Error("No refresh token");
-
       const { data } = await axios.post(
         `${API_CONFIG.BASE_URL}${ENDPOINTS.AUTH.REFRESH}`,
         { refreshToken: refreshTokenValue },

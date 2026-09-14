@@ -6,9 +6,16 @@ import { useAuthStore } from "@/stores/authStore";
 
 const product = [
   { href: "/explore", label: "Explore" },
+  { href: "/second-hand", label: "Second-hand Cameroon" },
   { href: "/sell", label: "Start selling" },
   { href: "/#how", label: "How it works" },
-  { href: "/#feed", label: "Live deals" },
+];
+
+const cities = [
+  { href: "/second-hand/buea", label: "Buea" },
+  { href: "/second-hand/douala", label: "Douala" },
+  { href: "/second-hand/yaounde", label: "Yaoundé" },
+  { href: "/second-hand/limbe", label: "Limbe" },
 ];
 
 const trust = [
@@ -59,21 +66,22 @@ export function SiteFooter() {
 
   return (
     <footer className="bg-primary text-white">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,minmax(0,1fr))] lg:px-6">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,minmax(0,1fr))] lg:px-6">
         <div>
           <Wordmark href="/" light className="mb-3" />
           <p className="max-w-sm text-sm font-semibold leading-relaxed text-white">
-            Buy &amp; sell pre-owned.
+            Cameroon’s second-hand marketplace.
           </p>
           <p className="mt-1 max-w-sm text-sm leading-relaxed text-white/85">
-            Find great second-hand products or give your unused items a new
-            home.
+            Buy and sell unused items in Buea, Douala, Yaoundé and Limbe. Make
+            an offer, meet in public, pay cash or MoMo.
           </p>
           <p className="mt-3 text-xs font-semibold text-white/70">
             Cameroon first · Nigeria next
           </p>
         </div>
         <FooterLinks title="Product" items={product} />
+        <FooterLinks title="Cities" items={cities} />
         <FooterLinks title="Trust" items={trust} />
         <FooterLinks title="Account" items={account} />
       </div>

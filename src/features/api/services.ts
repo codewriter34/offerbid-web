@@ -1,5 +1,7 @@
+import axios from "axios";
 import apiClient from "@/api/client";
 import { ENDPOINTS } from "@/api/endpoints";
+import { getAccessToken } from "@/lib/tokenStorage";
 import {
   mapHubs,
   mapIdentity,
@@ -82,8 +84,23 @@ export async function updateListingStatus(
 }
 
 export async function contactSeller(id: string) {
-  const { data } = await apiClient.post(ENDPOINTS.LISTINGS.CONTACT(id));
-  return extractWhatsAppUrl(data);
+  const post = (skipAuthHeader: boolean) =>
+    apiClient.post(ENDPOINTS.LISTINGS.CONTACT(id), undefined, {
+      skipAuthRefresh: true,
+      skipAuthHeader,
+    });
+
+  const hasToken = Boolean(getAccessToken());
+  try {
+    const { data } = await post(!hasToken);
+    return extractWhatsAppUrl(data);
+  } catch (error) {
+    if (hasToken && axios.isAxiosError(error) && error.response?.status === 401) {
+      const { data } = await post(true);
+      return extractWhatsAppUrl(data);
+    }
+    throw error;
+  }
 }
 
 export async function reportListing(listingId: string, reason: string) {

@@ -6,6 +6,7 @@ import type { CSSProperties } from "react";
 import { Camera, Gavel, MapPin, MessageCircle } from "lucide-react";
 import { AppShell, MarketingShell } from "@/components/layout/Shells";
 import { FeaturedDeals } from "@/components/marketing/FeaturedDeals";
+import { SeoFaq } from "@/components/seo/SeoFaq";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -106,8 +107,9 @@ function HowSection() {
           How OfferBid works
         </h2>
         <p className="mt-3 max-w-2xl text-ink-secondary">
-          Browse pre-owned listings, make a fair offer, then meet in person —
-          no endless chat until a deal sticks.
+          Cameroon’s marketplace for second-hand and unused items. Browse
+          listings near you, make a fair offer, then meet in person — no endless
+          chat until a deal sticks.
         </p>
         <ol className="mt-10 grid gap-4 md:grid-cols-3 md:gap-6">
           {[
@@ -178,7 +180,7 @@ function FeedSection({ compact }: { compact?: boolean }) {
       <div className={compact ? undefined : "mx-auto max-w-7xl"}>
         {compact ? (
           <PageHeader
-            title="Live on the feed"
+            title="Second-hand items near you"
             description="Pre-owned listings across Cameroon."
             action={
               <Link
@@ -193,10 +195,10 @@ function FeedSection({ compact }: { compact?: boolean }) {
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 className="font-display text-3xl font-bold md:text-4xl">
-                Live on the feed
+                Second-hand items for sale now
               </h2>
               <p className="mt-2 text-ink-secondary">
-                Live pre-owned listings across Cameroon.
+                Live unused and pre-owned listings across Cameroon.
               </p>
             </div>
             <Link
@@ -238,11 +240,12 @@ export function LandingClient() {
               </span>
             </p>
             <h1 className="hero-title-3d animate-hero-in max-w-2xl font-display text-3xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl lg:text-6xl">
-              Buy &amp; sell pre-owned
+              Cameroon’s second-hand marketplace
             </h1>
             <p className="hero-subtitle-3d animate-hero-in-delay mt-5 max-w-xl text-base text-white/90 sm:text-lg">
-              Find great second-hand products or give your unused items a new
-              home. Meet in public, pay cash or MoMo, close on WhatsApp.
+              Buy and sell unused items in Buea, Douala, Yaoundé and Limbe.
+              Search a laptop, phone, or sofa — make a fair offer, meet in
+              public, pay cash or MoMo.
             </p>
             <div className="animate-fade-rise-delay-2 relative z-20 mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
@@ -268,6 +271,7 @@ export function LandingClient() {
 
       <FeedSection />
       <HowSection />
+      <SeoFaq />
     </MarketingShell>
   );
 }

@@ -22,7 +22,7 @@ export function ListingTile({ listing }: { listing: Listing }) {
         {image ? (
           <Image
             src={image}
-            alt={listing.title}
+            alt={`${listing.title} for sale`}
             fill
             sizes="(max-width:768px) 50vw, 25vw"
             className={cn(

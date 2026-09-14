@@ -1,9 +1,9 @@
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
-  title: "Sell an item",
+  title: "Sell unused items in Cameroon",
   description:
-    "List a pre-owned item on OfferBid. Photos, a fair price, and a public meetup spot.",
+    "List a second-hand or unused item on OfferBid. Photos, a fair price, and a public meetup spot in Buea, Douala, Yaoundé or Limbe.",
   path: "/sell",
 });
 

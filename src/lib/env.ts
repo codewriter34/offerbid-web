@@ -30,6 +30,12 @@ export const APP_URL = stripTrailingSlash(
     "http://localhost:3001",
 );
 
+export const ANDROID_APP_URL =
+  "https://play.google.com/store/apps/details?id=com.offerbid.app";
+
+/** Set when the App Store listing is live. */
+export const IOS_APP_URL: string | null = null;
+
 export const MAX_ACTIVE_LISTINGS_UNVERIFIED = 3;
 export const MAX_ACTIVE_LISTINGS_VERIFIED = 10;
 export const MAX_ACTIVE_BIDS_PER_ITEM = 3;

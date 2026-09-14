@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { Wordmark } from "@/components/brand/Brand";
+import { AppDownloadBanner } from "@/components/layout/AppDownloadBanner";
 import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/stores/authStore";
 import { useHubStore } from "@/stores/hubStore";
@@ -108,7 +109,9 @@ export function SiteNavbar({
   const visibleLinks = navLinks.filter((item) => !item.auth || user);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/80 bg-surface/85 backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
+    <header className="sticky top-0 z-50 pt-[env(safe-area-inset-top)]">
+      <AppDownloadBanner />
+      <div className="border-b border-border/80 bg-surface/85 backdrop-blur-xl [-webkit-backdrop-filter:blur(24px)]">
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-2.5 sm:gap-3 sm:py-3 lg:px-6">
         <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-3">
           <Wordmark href="/" className="relative z-10 shrink-0" />
@@ -272,6 +275,7 @@ export function SiteNavbar({
           </div>
         </nav>
       ) : null}
+      </div>
     </header>
   );
 }

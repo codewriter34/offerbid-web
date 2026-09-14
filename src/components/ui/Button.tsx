@@ -3,7 +3,7 @@
 import { cn } from "@/lib/cn";
 import { ButtonHTMLAttributes, forwardRef } from "react";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline";
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline" | "whatsapp";
 type Size = "sm" | "md" | "lg";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -20,6 +20,8 @@ const variants: Record<Variant, string> = {
   danger: "bg-danger text-white hover:bg-danger/90 active:bg-danger",
   outline:
     "bg-surface text-ink border border-border hover:border-primary/40 hover:text-primary active:bg-elevated",
+  whatsapp:
+    "bg-[#25D366] text-white hover:bg-[#20bd5a] active:bg-[#1da851] focus-visible:ring-[#25D366]/40",
 };
 
 const sizes: Record<Size, string> = {

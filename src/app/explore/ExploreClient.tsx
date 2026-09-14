@@ -61,11 +61,12 @@ export default function ExploreClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialQ = searchParams.get("q") ?? "";
+  const initialCity = searchParams.get("city");
 
   const [search, setSearch] = useState(initialQ);
   const [q, setQ] = useState(initialQ);
   const [category, setCategory] = useState<string | null>(null);
-  const [city, setCity] = useState<string | null>(null);
+  const [city, setCity] = useState<string | null>(initialCity);
   const [location, setLocation] = useState<string | null>(null);
   const [sort, setSort] = useState("newest");
   const [minPrice, setMinPrice] = useState("");
@@ -76,6 +77,8 @@ export default function ExploreClient() {
     const next = searchParams.get("q") ?? "";
     setSearch(next);
     setQ(next);
+    const nextCity = searchParams.get("city");
+    if (nextCity) setCity(nextCity);
   }, [searchParams]);
 
   // Live search-as-you-type (debounced) — no Search button required.
@@ -200,11 +203,11 @@ export default function ExploreClient() {
       onSearchChange={setSearch}
     >
       <PageHeader
-        title={city ? `Deals in ${city}` : "All deals"}
+        title={city ? `Second-hand deals in ${city}` : "Second-hand items in Cameroon"}
         description={
           location
-            ? `Pickup around ${location}. Make an offer, close on WhatsApp.`
-            : "Pre-owned products across Cameroon. Filter only if you want a smaller list."
+            ? `Unused and pre-owned items around ${location}. Make an offer, meet locally.`
+            : "Search laptops, phones, furniture and more. Filter by city if you want a smaller list."
         }
       />
 
