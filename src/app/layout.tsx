@@ -74,7 +74,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en-CM">
       <body className={`${dmSans.variable} ${syne.variable} antialiased`}>
         <Providers>{children}</Providers>
       </body>

@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "OfferBid — Buy and sell pre-owned in Cameroon";
+export const alt = "OfferBid — Cameroon’s second-hand marketplace";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -50,10 +50,10 @@ export default function OpenGraphImage() {
               letterSpacing: -1.5,
             }}
           >
-            Buy & sell pre-owned
+            Buy & sell second-hand
           </div>
           <div style={{ fontSize: 28, opacity: 0.92, maxWidth: 860, lineHeight: 1.35 }}>
-            Find great second-hand products or give your unused items a new home.
+            Unused items in Buea, Douala, Yaoundé and Limbe. Cameroon’s local marketplace.
           </div>
         </div>
         <div style={{ display: "flex", fontSize: 22, opacity: 0.88 }}>

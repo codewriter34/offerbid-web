@@ -58,7 +58,7 @@ export default async function ListingOpenGraphImage({ params }: Props) {
           </div>
           <div style={{ fontSize: 32, opacity: 0.92 }}>{price}</div>
         </div>
-        <div style={{ fontSize: 24, opacity: 0.85 }}>{place} · Buy & sell pre-owned</div>
+        <div style={{ fontSize: 24, opacity: 0.85 }}>{place} · Second-hand for sale in Cameroon</div>
       </div>
     ),
     size,

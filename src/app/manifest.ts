@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "OfferBid",
     short_name: "OfferBid",
     description:
-      "Buy and sell pre-owned in Cameroon. Fair offers, close on WhatsApp.",
+      "Buy and sell second-hand and unused items in Cameroon. Fair offers, meet locally.",
     start_url: "/",
     display: "standalone",
     background_color: "#eef3f8",

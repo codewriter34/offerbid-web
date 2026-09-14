@@ -65,6 +65,7 @@ export default function ListingDetailClient({
     kind: "offer" | "accepted";
     whatsappUrl?: string | null;
   } | null>(null);
+  const [isContacting, setIsContacting] = useState(false);
   const swipeX = useRef<number | null>(null);
 
   const listingQuery = useQuery({
@@ -176,6 +177,20 @@ export default function ListingDetailClient({
     },
     onError: (e) => setNotice(getErrorMessage(e)),
   });
+
+  async function handleContactSeller() {
+    if (isContacting) return;
+    setIsContacting(true);
+    try {
+      const url = await contactSeller(id);
+      if (url) openWhatsApp(url);
+      else setNotice("WhatsApp link unavailable");
+    } catch (e) {
+      setNotice(getErrorMessage(e));
+    } finally {
+      setIsContacting(false);
+    }
+  }
 
   async function shareListing() {
     const url = window.location.href;
@@ -361,21 +376,6 @@ export default function ListingDetailClient({
                 <p className="text-sm text-ink-secondary">
                   This listing is no longer accepting offers.
                 </p>
-              ) : !user ? (
-                <div className="space-y-3">
-                  <p className="text-sm text-ink-secondary">
-                    Log in to make an offer.
-                  </p>
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    onClick={() => {
-                      window.location.href = `/auth?next=/listings/${id}`;
-                    }}
-                  >
-                    Log in to offer
-                  </Button>
-                </div>
               ) : (
                 <>
                   {missingWhatsApp ? (
@@ -387,24 +387,28 @@ export default function ListingDetailClient({
                       so accepted deals can reach you.
                     </p>
                   ) : null}
-                  <Button className="w-full" size="lg" onClick={() => setBidOpen(true)}>
-                    Make an offer
-                  </Button>
-                  <button
-                    type="button"
-                    className="w-full min-h-11 text-sm font-semibold text-ink-muted hover:text-ink"
-                    onClick={async () => {
-                      try {
-                        const url = await contactSeller(id);
-                        if (url) openWhatsApp(url);
-                        else setNotice("WhatsApp link unavailable");
-                      } catch (e) {
-                        setNotice(getErrorMessage(e));
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={() => {
+                      if (!user) {
+                        window.location.href = `/auth?next=/listings/${id}`;
+                        return;
                       }
+                      setBidOpen(true);
                     }}
                   >
-                    Request WhatsApp
-                  </button>
+                    Make an offer
+                  </Button>
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    variant="whatsapp"
+                    loading={isContacting}
+                    onClick={() => void handleContactSeller()}
+                  >
+                    Contact on WhatsApp
+                  </Button>
                 </>
               )}
             </div>
@@ -488,20 +492,26 @@ export default function ListingDetailClient({
               size="sm"
               className="min-w-0 truncate"
             />
-            {!user ? (
+            <div className="ml-auto flex shrink-0 items-center gap-2">
               <Button
-                className="ml-auto"
+                variant="whatsapp"
+                loading={isContacting}
+                onClick={() => void handleContactSeller()}
+              >
+                WhatsApp
+              </Button>
+              <Button
                 onClick={() => {
-                  window.location.href = `/auth?next=/listings/${id}`;
+                  if (!user) {
+                    window.location.href = `/auth?next=/listings/${id}`;
+                    return;
+                  }
+                  setBidOpen(true);
                 }}
               >
-                Log in to offer
-              </Button>
-            ) : (
-              <Button className="ml-auto" onClick={() => setBidOpen(true)}>
                 Make offer
               </Button>
-            )}
+            </div>
           </div>
         </div>
       ) : null}
