@@ -65,6 +65,7 @@ export default function ListingDetailClient({
     kind: "offer" | "accepted";
     whatsappUrl?: string | null;
   } | null>(null);
+  const [isContacting, setIsContacting] = useState(false);
   const swipeX = useRef<number | null>(null);
 
   const listingQuery = useQuery({
@@ -176,6 +177,20 @@ export default function ListingDetailClient({
     },
     onError: (e) => setNotice(getErrorMessage(e)),
   });
+
+  async function handleContactSeller() {
+    if (isContacting) return;
+    setIsContacting(true);
+    try {
+      const url = await contactSeller(id);
+      if (url) openWhatsApp(url);
+      else setNotice("WhatsApp link unavailable");
+    } catch (e) {
+      setNotice(getErrorMessage(e));
+    } finally {
+      setIsContacting(false);
+    }
+  }
 
   async function shareListing() {
     const url = window.location.href;
@@ -390,21 +405,15 @@ export default function ListingDetailClient({
                   <Button className="w-full" size="lg" onClick={() => setBidOpen(true)}>
                     Make an offer
                   </Button>
-                  <button
-                    type="button"
-                    className="w-full min-h-11 text-sm font-semibold text-ink-muted hover:text-ink"
-                    onClick={async () => {
-                      try {
-                        const url = await contactSeller(id);
-                        if (url) openWhatsApp(url);
-                        else setNotice("WhatsApp link unavailable");
-                      } catch (e) {
-                        setNotice(getErrorMessage(e));
-                      }
-                    }}
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    variant="outline"
+                    loading={isContacting}
+                    onClick={() => void handleContactSeller()}
                   >
-                    Request WhatsApp
-                  </button>
+                    Contact on WhatsApp
+                  </Button>
                 </>
               )}
             </div>
@@ -498,9 +507,16 @@ export default function ListingDetailClient({
                 Log in to offer
               </Button>
             ) : (
-              <Button className="ml-auto" onClick={() => setBidOpen(true)}>
-                Make offer
-              </Button>
+              <div className="ml-auto flex shrink-0 items-center gap-2">
+                <Button
+                  variant="outline"
+                  loading={isContacting}
+                  onClick={() => void handleContactSeller()}
+                >
+                  WhatsApp
+                </Button>
+                <Button onClick={() => setBidOpen(true)}>Make offer</Button>
+              </div>
             )}
           </div>
         </div>
