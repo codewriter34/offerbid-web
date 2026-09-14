@@ -25,6 +25,7 @@ import {
   counterRespond,
   fetchListing,
   fetchListingBids,
+  fetchMyBids,
   reportListing,
   respondToBid,
   updateListingStatus,
@@ -71,20 +72,28 @@ export default function ListingDetailClient({
     queryFn: () => fetchListing(id),
   });
 
+  const listing = listingQuery.data;
+  const isOwner = Boolean(user && listing && user.id === listing.sellerId);
+
+  // GET /listings/:id/bids is seller-only (API 403 for anyone else).
   const bidsQuery = useQuery({
-    queryKey: ["listing-bids", id],
-    queryFn: () => fetchListingBids(id),
-    enabled: Boolean(user),
+    queryKey: ["listing-bids", id, isOwner ? "seller" : "buyer"],
+    queryFn: async () => {
+      if (isOwner) return fetchListingBids(id);
+      const mine = await fetchMyBids();
+      return mine.filter((bid) => bid.listingId === id);
+    },
+    enabled: Boolean(user && listing),
   });
 
   useEffect(() => {
     if (!user) return;
-    connectSocket();
-    subscribeToListing(id);
     const socket = connectSocket();
+    subscribeToListing(id);
     const refresh = () => {
       void qc.invalidateQueries({ queryKey: ["listing", id] });
       void qc.invalidateQueries({ queryKey: ["listing-bids", id] });
+      void qc.invalidateQueries({ queryKey: ["my-bids"] });
     };
     socket?.on("bid:placed", refresh);
     socket?.on("bid:countered", refresh);
@@ -97,8 +106,6 @@ export default function ListingDetailClient({
     };
   }, [id, qc, user]);
 
-  const listing = listingQuery.data;
-  const isOwner = Boolean(user && listing && user.id === listing.sellerId);
   const isActive = listing?.status === "ACTIVE";
   const missingWhatsApp = Boolean(user && !effectiveWhatsAppPhone(user.phone));
 
