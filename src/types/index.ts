@@ -17,6 +17,7 @@ export interface User {
   isVerified: boolean;
   googleId: string | null;
   createdAt: string | null;
+  showPhoneInChat: boolean;
 }
 
 export interface AuthTokens {
@@ -216,4 +217,126 @@ export interface SubmitIdentityPayload {
   selfieUrl: string;
   idBackUrl?: string;
   fullNameOnId?: string;
+}
+
+// ---- Chat (end-to-end encrypted 1:1 messaging) ----
+
+export interface ConversationListingSummary {
+  id: string;
+  title: string;
+  image: string | null;
+  status: ListingStatus | string;
+  askingPrice: number;
+  currency: string;
+}
+
+export interface ConversationPeer {
+  id: string;
+  fullName: string;
+  avatarUrl: string | null;
+  isVerified: boolean;
+  showPhoneInChat: boolean;
+  phone: string | null;
+  countryCode: string | null;
+  whatsappUrl: string | null;
+}
+
+export type ConversationRole = "buyer" | "seller";
+
+export interface Conversation {
+  id: string;
+  listing: ConversationListingSummary;
+  peer: ConversationPeer;
+  unreadCount: number;
+  lastMessageAt: string | null;
+  createdAt: string;
+  role: ConversationRole;
+}
+
+export interface ConversationsPage {
+  conversations: Conversation[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+export type EnvelopeType = "PREKEY" | "RATCHET";
+
+export interface MessageEnvelope {
+  recipientUserId: string;
+  recipientDeviceId: string;
+  type: EnvelopeType;
+  ciphertext: string;
+  header?: string | null;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderDeviceId: string;
+  createdAt: string;
+  envelopes: MessageEnvelope[];
+  /** Populated client-side after local decryption; never sent to the API. */
+  plaintext?: string | null;
+  decryptError?: boolean;
+}
+
+export interface MessagesPage {
+  messages: ChatMessage[];
+  limit: number;
+}
+
+export interface SendMessageResult {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderDeviceId: string;
+  createdAt: string;
+}
+
+export interface SignedPreKeyBundle {
+  keyId: number;
+  publicKey: string;
+  signature: string;
+}
+
+export interface OneTimePreKeyBundle {
+  keyId: number;
+  publicKey: string;
+}
+
+export interface PeerDeviceBundle {
+  userId: string;
+  deviceId: string;
+  registrationId: number;
+  identityKey: string;
+  signedPreKey: SignedPreKeyBundle;
+  oneTimePreKey: OneTimePreKeyBundle | null;
+}
+
+export interface PeerKeysResponse {
+  userId: string;
+  devices: PeerDeviceBundle[];
+}
+
+export interface OwnDeviceInfo {
+  deviceId: string;
+  registrationId: number;
+  oneTimePreKeyCount: number;
+  updatedAt: string;
+}
+
+export interface OwnKeysResponse {
+  devices: OwnDeviceInfo[];
+}
+
+export interface UploadKeysPayload {
+  deviceId: string;
+  registrationId: number;
+  identityKey: string;
+  signedPreKeyId: number;
+  signedPreKey: string;
+  signedPreKeySig: string;
+  oneTimePreKeys: { keyId: number; publicKey: string }[];
 }

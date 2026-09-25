@@ -50,3 +50,11 @@ export function subscribeToListing(listingId: string) {
 export function unsubscribeFromListing(listingId: string) {
   socket?.emit("unsubscribeFromListing", { listingId });
 }
+
+export function subscribeToConversation(conversationId: string) {
+  socket?.emit("subscribeToConversation", { conversationId });
+}
+
+export function unsubscribeFromConversation(conversationId: string) {
+  socket?.emit("unsubscribeFromConversation", { conversationId });
+}

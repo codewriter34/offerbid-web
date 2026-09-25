@@ -2,6 +2,9 @@ import type {
   AppNotification,
   Bid,
   BidStatus,
+  ChatMessage,
+  Conversation,
+  ConversationsPage,
   CountryHub,
   Hub,
   HubsResponse,
@@ -11,6 +14,8 @@ import type {
   ListingImage,
   ListingsPage,
   ListingStatus,
+  MessageEnvelope,
+  MessagesPage,
   NotificationType,
   User,
 } from "@/types";
@@ -59,6 +64,7 @@ export function mapUser(rawInput: unknown): User {
     isVerified: Boolean(raw.isVerified ?? raw.is_verified),
     googleId: pickString(raw.googleId, raw.google_id),
     createdAt: pickString(raw.createdAt, raw.created_at),
+    showPhoneInChat: Boolean(raw.showPhoneInChat ?? raw.show_phone_in_chat),
   };
 }
 
@@ -343,4 +349,81 @@ export function unreadCountFrom(
   const count = pickNumber(raw.unreadCount, raw.unread_count);
   if (count != null) return count;
   return notifications.filter((n) => !n.read).length;
+}
+
+// ---- Chat ----
+
+export function mapConversation(rawInput: unknown): Conversation {
+  const raw = asRecord(rawInput);
+  const listing = asRecord(raw.listing);
+  const peer = asRecord(raw.peer);
+  return {
+    id: String(raw.id ?? ""),
+    listing: {
+      id: String(listing.id ?? ""),
+      title: pickString(listing.title) ?? "",
+      image: pickString(listing.image),
+      status: pickString(listing.status) ?? "ACTIVE",
+      askingPrice: pickNumber(listing.askingPrice) ?? 0,
+      currency: pickString(listing.currency) ?? "XAF",
+    },
+    peer: {
+      id: String(peer.id ?? ""),
+      fullName: pickString(peer.fullName) ?? "User",
+      avatarUrl: pickString(peer.avatarUrl),
+      isVerified: Boolean(peer.isVerified),
+      showPhoneInChat: Boolean(peer.showPhoneInChat),
+      phone: pickString(peer.phone),
+      countryCode: pickString(peer.countryCode),
+      whatsappUrl: pickString(peer.whatsappUrl),
+    },
+    unreadCount: pickNumber(raw.unreadCount) ?? 0,
+    lastMessageAt: pickString(raw.lastMessageAt),
+    createdAt: pickString(raw.createdAt) ?? new Date().toISOString(),
+    role: raw.role === "seller" ? "seller" : "buyer",
+  };
+}
+
+export function mapConversationsPage(data: unknown): ConversationsPage {
+  const raw = asRecord(data);
+  const conversations = extractList(data).map(mapConversation);
+  return {
+    conversations,
+    page: pickNumber(raw.page) ?? 1,
+    limit: pickNumber(raw.limit) ?? conversations.length,
+    total: pickNumber(raw.total) ?? conversations.length,
+  };
+}
+
+function mapEnvelope(rawInput: unknown): MessageEnvelope {
+  const raw = asRecord(rawInput);
+  return {
+    recipientUserId: String(raw.recipientUserId ?? ""),
+    recipientDeviceId: String(raw.recipientDeviceId ?? ""),
+    type: raw.type === "RATCHET" ? "RATCHET" : "PREKEY",
+    ciphertext: pickString(raw.ciphertext) ?? "",
+    header: pickString(raw.header),
+  };
+}
+
+export function mapChatMessage(rawInput: unknown): ChatMessage {
+  const raw = asRecord(rawInput);
+  const envelopes = Array.isArray(raw.envelopes) ? raw.envelopes.map(mapEnvelope) : [];
+  return {
+    id: String(raw.id ?? ""),
+    conversationId: String(raw.conversationId ?? ""),
+    senderId: String(raw.senderId ?? ""),
+    senderDeviceId: String(raw.senderDeviceId ?? ""),
+    createdAt: pickString(raw.createdAt) ?? new Date().toISOString(),
+    envelopes,
+  };
+}
+
+export function mapMessagesPage(data: unknown): MessagesPage {
+  const raw = asRecord(data);
+  const messages = extractList(data).map(mapChatMessage);
+  return {
+    messages,
+    limit: pickNumber(raw.limit) ?? messages.length,
+  };
 }

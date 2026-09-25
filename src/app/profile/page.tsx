@@ -1,16 +1,17 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Bell,
   Camera,
   ChevronRight,
   Gavel,
   MapPin,
+  MessageCircle,
   Shield,
   Store,
   Tag,
@@ -21,10 +22,11 @@ import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Switch } from "@/components/ui/Switch";
 import { ListingTile } from "@/components/listings/ListingTile";
 import { ListingSkeleton, ProfileSkeleton } from "@/components/ui/EmptyState";
 import { ActionNotice } from "@/components/ui/ActionNotice";
-import { logout, updateAvatar } from "@/features/auth/authService";
+import { logout, updateAvatar, updateProfile } from "@/features/auth/authService";
 import {
   fetchIdentity,
   fetchMyBids,
@@ -163,6 +165,24 @@ export default function ProfilePage() {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [showPhoneInChat, setShowPhoneInChat] = useState(
+    user?.showPhoneInChat ?? false,
+  );
+
+  useEffect(() => {
+    setShowPhoneInChat(user?.showPhoneInChat ?? false);
+  }, [user?.showPhoneInChat]);
+
+  const togglePhoneMutation = useMutation({
+    mutationFn: (next: boolean) => updateProfile({ showPhoneInChat: next }),
+    onSuccess: (updated) => setUser(updated),
+    onError: (err, next) => {
+      setShowPhoneInChat(!next);
+      setNotice(
+        err instanceof Error ? err.message : "Couldn’t update that setting",
+      );
+    },
+  });
 
   const listingsQuery = useQuery({
     queryKey: ["my-listings"],
@@ -360,6 +380,35 @@ export default function ProfilePage() {
               </div>
             </section>
 
+            <section className="rounded-lg border border-border bg-surface p-4 shadow-rest">
+              <div className="flex items-start gap-3">
+                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-elevated text-primary">
+                  <MessageCircle className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-semibold text-ink">
+                      Show WhatsApp number in chat
+                    </p>
+                    <Switch
+                      checked={showPhoneInChat}
+                      disabled={togglePhoneMutation.isPending}
+                      onCheckedChange={(next) => {
+                        setShowPhoneInChat(next);
+                        setNotice(null);
+                        togglePhoneMutation.mutate(next);
+                      }}
+                    />
+                  </div>
+                  <p className="mt-1 text-sm text-ink-secondary">
+                    When on, people you’re chatting with can see your WhatsApp
+                    number and open a WhatsApp chat directly. Messages
+                    themselves are always end-to-end encrypted either way.
+                  </p>
+                </div>
+              </div>
+            </section>
+
             <section>
               <h2 className="type-section mb-3 text-ink">My activity</h2>
               <div className="flex gap-2">
@@ -384,6 +433,12 @@ export default function ProfilePage() {
             </section>
 
             <section className="overflow-hidden rounded-lg border border-border bg-surface shadow-rest">
+              <MenuRow
+                href="/inbox"
+                icon={MessageCircle}
+                title="Inbox"
+                subtitle="Your encrypted conversations"
+              />
               <MenuRow
                 href="/notifications"
                 icon={Bell}

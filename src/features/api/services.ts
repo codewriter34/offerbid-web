@@ -11,6 +11,9 @@ import {
   mapBids,
   mapBid,
   mapNotifications,
+  mapConversation,
+  mapConversationsPage,
+  mapMessagesPage,
   unreadCountFrom,
 } from "@/api/mappers";
 import { extractWhatsAppUrl } from "@/api/normalize";
@@ -19,8 +22,13 @@ import type {
   CreateBidPayload,
   CreateListingPayload,
   CounterRespondPayload,
+  MessageEnvelope,
+  OwnKeysResponse,
+  PeerKeysResponse,
   RespondBidPayload,
+  SendMessageResult,
   SubmitIdentityPayload,
+  UploadKeysPayload,
 } from "@/types";
 
 export async function fetchHubs() {
@@ -167,4 +175,74 @@ export async function submitIdentity(payload: SubmitIdentityPayload) {
 
 export async function uploadFile(file: File, purpose: UploadPurpose) {
   return putUpload(file, purpose);
+}
+
+// ---- Chat ----
+
+export async function fetchConversations(
+  params: { page?: number; limit?: number } = {},
+) {
+  const { data } = await apiClient.get(ENDPOINTS.CHATS.LIST, {
+    params: { page: params.page ?? 1, limit: params.limit ?? 20 },
+  });
+  return mapConversationsPage(data);
+}
+
+export async function fetchConversation(id: string) {
+  const { data } = await apiClient.get(ENDPOINTS.CHATS.DETAIL(id));
+  return mapConversation(data);
+}
+
+export async function createConversation(listingId: string) {
+  const { data } = await apiClient.post(ENDPOINTS.CHATS.CREATE, { listingId });
+  return mapConversation(data);
+}
+
+export async function fetchMessages(
+  chatId: string,
+  params: { before?: string; limit?: number } = {},
+) {
+  const { data } = await apiClient.get(ENDPOINTS.CHATS.MESSAGES(chatId), {
+    params: { limit: params.limit ?? 30, before: params.before },
+  });
+  return mapMessagesPage(data);
+}
+
+export async function sendChatMessage(
+  chatId: string,
+  payload: { senderDeviceId: string; envelopes: MessageEnvelope[] },
+): Promise<SendMessageResult> {
+  const { data } = await apiClient.post(ENDPOINTS.CHATS.MESSAGES(chatId), payload);
+  return data as SendMessageResult;
+}
+
+export async function markChatRead(chatId: string, lastMessageId?: string) {
+  const { data } = await apiClient.patch(
+    ENDPOINTS.CHATS.READ(chatId),
+    lastMessageId ? { lastMessageId } : {},
+  );
+  return data as { conversationId: string; unreadCount: number };
+}
+
+export async function uploadChatKeys(payload: UploadKeysPayload) {
+  const { data } = await apiClient.post(ENDPOINTS.CHATS.KEYS_UPLOAD, payload);
+  return data as {
+    deviceId: string;
+    registrationId: number;
+    identityKey: string;
+    signedPreKeyId: number;
+    oneTimePreKeyCount: number;
+  };
+}
+
+export async function fetchMyChatDevices(): Promise<OwnKeysResponse> {
+  const { data } = await apiClient.get(ENDPOINTS.CHATS.KEYS_ME);
+  return data as OwnKeysResponse;
+}
+
+export async function fetchPeerChatKeys(
+  peerUserId: string,
+): Promise<PeerKeysResponse> {
+  const { data } = await apiClient.get(ENDPOINTS.CHATS.KEYS_PEER(peerUserId));
+  return data as PeerKeysResponse;
 }
