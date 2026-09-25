@@ -7,6 +7,7 @@ import { useHubStore } from "@/stores/hubStore";
 import { restoreSession } from "@/features/auth/authService";
 import { fetchHubs } from "@/features/api/services";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { bootstrapChatKeys } from "@/features/chat/keysBootstrap";
 
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const setUser = useAuthStore((s) => s.setUser);
@@ -57,8 +58,15 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
   }, [clear, setCatalog, setLoading, setSelection, setUser]);
 
   useEffect(() => {
-    if (user) connectSocket();
-    else disconnectSocket();
+    if (user) {
+      connectSocket();
+      // Best-effort: ensures a local Olm identity + device exist and are
+      // registered with the API, and tops up one-time prekeys if the
+      // server-side pool is running low. Never throws (see docstring).
+      void bootstrapChatKeys();
+    } else {
+      disconnectSocket();
+    }
   }, [user]);
 
   return <>{children}</>;

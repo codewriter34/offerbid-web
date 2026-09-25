@@ -50,6 +50,16 @@ export const ENDPOINTS = {
     COUNTER_RESPOND: (bidId: string) => `/bids/${bidId}/counter-respond`,
   },
   DEVICES: "/devices",
+  CHATS: {
+    LIST: "/chats",
+    CREATE: "/chats",
+    DETAIL: (id: string) => `/chats/${id}`,
+    MESSAGES: (id: string) => `/chats/${id}/messages`,
+    READ: (id: string) => `/chats/${id}/read`,
+    KEYS_UPLOAD: "/chats/keys",
+    KEYS_ME: "/chats/keys/me",
+    KEYS_PEER: (peerUserId: string) => `/chats/keys/${peerUserId}`,
+  },
   NOTIFICATIONS: {
     LIST: "/notifications",
     MARK_READ: (id: string) => `/notifications/${id}/read`,

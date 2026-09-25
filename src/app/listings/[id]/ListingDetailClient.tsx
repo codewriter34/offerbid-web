@@ -3,8 +3,18 @@
 import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Gavel, MapPin, Share2, ShieldCheck, X } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Gavel,
+  MapPin,
+  MessageCircle,
+  Share2,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import { AppShell } from "@/components/layout/Shells";
 import { SafetyBanner } from "@/components/brand/Brand";
 import { Button } from "@/components/ui/Button";
@@ -20,8 +30,8 @@ import { OfferActions } from "@/components/listings/OfferActions";
 import { ActionNotice } from "@/components/ui/ActionNotice";
 import { ApiWakeBanner } from "@/components/ui/ApiWakeBanner";
 import {
-  contactSeller,
   createBid,
+  createConversation,
   counterRespond,
   fetchListing,
   fetchListingBids,
@@ -43,7 +53,6 @@ import {
   subscribeToListing,
   unsubscribeFromListing,
 } from "@/lib/socket";
-import { effectiveWhatsAppPhone } from "@/lib/whatsappPhone";
 
 export default function ListingDetailClient({
   params,
@@ -52,6 +61,7 @@ export default function ListingDetailClient({
 }) {
   const { id } = use(params);
   const user = useAuthStore((s) => s.user);
+  const router = useRouter();
   const qc = useQueryClient();
   const [offer, setOffer] = useState("");
   const [counterByBid, setCounterByBid] = useState<Record<string, string>>({});
@@ -65,7 +75,7 @@ export default function ListingDetailClient({
     kind: "offer" | "accepted";
     whatsappUrl?: string | null;
   } | null>(null);
-  const [isContacting, setIsContacting] = useState(false);
+  const [isMessaging, setIsMessaging] = useState(false);
   const swipeX = useRef<number | null>(null);
 
   const listingQuery = useQuery({
@@ -108,7 +118,6 @@ export default function ListingDetailClient({
   }, [id, qc, user]);
 
   const isActive = listing?.status === "ACTIVE";
-  const missingWhatsApp = Boolean(user && !effectiveWhatsAppPhone(user.phone));
 
   useEffect(() => {
     if (!lightbox || !listing) return;
@@ -178,17 +187,15 @@ export default function ListingDetailClient({
     onError: (e) => setNotice(getErrorMessage(e)),
   });
 
-  async function handleContactSeller() {
-    if (isContacting) return;
-    setIsContacting(true);
+  async function handleMessageSeller() {
+    if (isMessaging) return;
+    setIsMessaging(true);
     try {
-      const url = await contactSeller(id);
-      if (url) openWhatsApp(url);
-      else setNotice("WhatsApp link unavailable");
+      const conversation = await createConversation(id);
+      router.push(`/inbox/${conversation.id}`);
     } catch (e) {
       setNotice(getErrorMessage(e));
-    } finally {
-      setIsContacting(false);
+      setIsMessaging(false);
     }
   }
 
@@ -378,15 +385,6 @@ export default function ListingDetailClient({
                 </p>
               ) : (
                 <>
-                  {missingWhatsApp ? (
-                    <p className="text-xs text-ink-muted">
-                      Add a WhatsApp number in{" "}
-                      <Link href="/onboarding/hub" className="font-semibold text-primary">
-                        hub settings
-                      </Link>{" "}
-                      so accepted deals can reach you.
-                    </p>
-                  ) : null}
                   <Button
                     className="w-full"
                     size="lg"
@@ -403,11 +401,18 @@ export default function ListingDetailClient({
                   <Button
                     className="w-full"
                     size="lg"
-                    variant="whatsapp"
-                    loading={isContacting}
-                    onClick={() => void handleContactSeller()}
+                    variant="outline"
+                    loading={isMessaging}
+                    onClick={() => {
+                      if (!user) {
+                        window.location.href = `/auth?next=/listings/${id}`;
+                        return;
+                      }
+                      void handleMessageSeller();
+                    }}
                   >
-                    Contact on WhatsApp
+                    <MessageCircle className="h-4 w-4" />
+                    Message seller
                   </Button>
                 </>
               )}
@@ -494,11 +499,18 @@ export default function ListingDetailClient({
             />
             <div className="ml-auto flex shrink-0 items-center gap-2">
               <Button
-                variant="whatsapp"
-                loading={isContacting}
-                onClick={() => void handleContactSeller()}
+                variant="outline"
+                loading={isMessaging}
+                onClick={() => {
+                  if (!user) {
+                    window.location.href = `/auth?next=/listings/${id}`;
+                    return;
+                  }
+                  void handleMessageSeller();
+                }}
               >
-                WhatsApp
+                <MessageCircle className="h-4 w-4" />
+                Message
               </Button>
               <Button
                 onClick={() => {

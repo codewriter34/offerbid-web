@@ -8,6 +8,7 @@ import {
   Bell,
   MapPin,
   Menu,
+  MessageCircle,
   Plus,
   Search,
   User as UserIcon,
@@ -21,6 +22,7 @@ import { useHubStore } from "@/stores/hubStore";
 import { cn } from "@/lib/cn";
 import { useQuery } from "@tanstack/react-query";
 import { fetchNotifications } from "@/features/api/services";
+import { useUnreadChatCount } from "@/features/chat/useConversations";
 
 const navLinks = [
   { href: "/explore", label: "Explore" },
@@ -57,6 +59,7 @@ export function SiteNavbar({
     enabled: Boolean(user),
     refetchInterval: 60000,
   });
+  const unreadChatCount = useUnreadChatCount();
 
   const hubLabel =
     selectedLocation && selectedCity
@@ -160,6 +163,16 @@ export function SiteNavbar({
           {user ? (
             <>
               <Link
+                href="/inbox"
+                className="relative inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-ink-secondary hover:bg-canvas hover:text-ink"
+                aria-label="Inbox"
+              >
+                <MessageCircle className="h-5 w-5" />
+                {unreadChatCount > 0 ? (
+                  <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-danger" />
+                ) : null}
+              </Link>
+              <Link
                 href="/notifications"
                 className="relative inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-ink-secondary hover:bg-canvas hover:text-ink"
                 aria-label="Notifications"
@@ -259,6 +272,7 @@ export function SiteNavbar({
                     { href: "/bids", label: "My bids" },
                     { href: "/selling", label: "Selling" },
                     { href: "/sell", label: "Sell an item" },
+                    { href: "/inbox", label: "Inbox" },
                     { href: "/notifications", label: "Notifications" },
                   ]
                 : [{ href: "/auth", label: "Log in" }]),

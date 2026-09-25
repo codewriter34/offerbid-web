@@ -112,3 +112,8 @@ export async function updateAvatar(avatarUrl: string) {
   const { data } = await apiClient.patch(ENDPOINTS.USERS.AVATAR, { url: avatarUrl });
   return mapUser(data?.user ?? data);
 }
+
+export async function updateProfile(payload: { showPhoneInChat?: boolean }) {
+  const { data } = await apiClient.patch(ENDPOINTS.USERS.ME, payload);
+  return mapUser(data?.user ?? data);
+}
