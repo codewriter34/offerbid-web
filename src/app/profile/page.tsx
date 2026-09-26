@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,17 +14,20 @@ import {
   Shield,
   Store,
   Tag,
+  Trash2,
 } from "lucide-react";
 import { AppShell } from "@/components/layout/Shells";
 import { RequireAuth } from "@/components/auth/RequireAuth";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ListingTile } from "@/components/listings/ListingTile";
 import { ListingSkeleton, ProfileSkeleton } from "@/components/ui/EmptyState";
 import { ActionNotice } from "@/components/ui/ActionNotice";
-import { logout, updateAvatar } from "@/features/auth/authService";
+import { logout, updateAvatar, updateProfile, deleteAccount } from "@/features/auth/authService";
 import {
   fetchIdentity,
   fetchMyBids,
@@ -34,12 +37,15 @@ import {
 } from "@/features/api/services";
 import { useAuthStore } from "@/stores/authStore";
 import { useHubStore } from "@/stores/hubStore";
-import { friendlyUploadError } from "@/lib/formatters";
+import { friendlyUploadError, getErrorMessage } from "@/lib/formatters";
 import { popConfetti } from "@/lib/confetti";
 import { disconnectSocket } from "@/lib/socket";
 import { effectiveWhatsAppPhone } from "@/lib/whatsappPhone";
+import { isValidLocalPhone, phoneTypingHint } from "@/lib/validators";
+import { COUNTRY_OPTIONS } from "@/lib/env";
 import { statusLabel } from "@/lib/status";
 import { cn } from "@/lib/cn";
+import type { Country } from "@/types";
 
 function Stat({
   icon: Icon,
@@ -163,6 +169,19 @@ export default function ProfilePage() {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [whatsapp, setWhatsapp] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState<Country>("CAMEROON");
+  const [savingPhone, setSavingPhone] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    setWhatsapp(user.phone?.replace(/\D/g, "") ?? "");
+    setPhoneCountry(user.country === "NIGERIA" ? "NIGERIA" : "CAMEROON");
+  }, [user]);
 
   const listingsQuery = useQuery({
     queryKey: ["my-listings"],
@@ -200,7 +219,11 @@ export default function ProfilePage() {
       : user?.location && user?.city
         ? `${user.location}, ${user.city}`
         : user?.city ?? null;
-  const whatsapp = effectiveWhatsAppPhone(user?.phone);
+  const whatsappOnFile = effectiveWhatsAppPhone(user?.phone);
+  const countryCode =
+    COUNTRY_OPTIONS.find((c) => c.country === phoneCountry)?.countryCode ??
+    "+237";
+  const phoneError = phoneTypingHint(whatsapp, phoneCountry);
 
   return (
     <AppShell>
@@ -274,7 +297,7 @@ export default function ProfilePage() {
                     <p className="truncate text-sm text-ink-muted">{user.email}</p>
                   ) : null}
                   <p className="mt-1 text-sm text-ink-secondary">
-                    {whatsapp ?? "No WhatsApp number on file"}
+                    {whatsappOnFile ?? "No WhatsApp number on file"}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <StatusBadge
@@ -291,6 +314,69 @@ export default function ProfilePage() {
                     <p className="mt-2 text-xs text-ink-muted">Uploading…</p>
                   ) : null}
                 </div>
+              </div>
+            </section>
+
+            <section className="rounded-lg border border-border bg-surface p-4 shadow-rest">
+              <h2 className="text-sm font-semibold text-ink">WhatsApp (optional)</h2>
+              <p className="mt-1 text-sm text-ink-secondary">
+                Not required to use OfferBid. Add it so accepted deals can continue
+                on WhatsApp.
+              </p>
+              <div className="mt-4 space-y-3">
+                <Select
+                  label="Country"
+                  value={phoneCountry}
+                  onChange={(e) => {
+                    const next = e.target.value as Country;
+                    if (next !== phoneCountry) setWhatsapp("");
+                    setPhoneCountry(next);
+                  }}
+                >
+                  {COUNTRY_OPTIONS.map((c) => (
+                    <option key={c.country} value={c.country}>
+                      {c.flag} {c.label}
+                    </option>
+                  ))}
+                </Select>
+                <Input
+                  label="WhatsApp number"
+                  autoComplete="tel"
+                  value={whatsapp}
+                  leading={countryCode}
+                  onChange={(e) => setWhatsapp(e.target.value)}
+                  placeholder={phoneCountry === "NIGERIA" ? "8012345678" : "6XXXXXXXX"}
+                  error={phoneError ?? undefined}
+                />
+                <Button
+                  variant="outline"
+                  loading={savingPhone}
+                  onClick={async () => {
+                    if (!isValidLocalPhone(whatsapp, phoneCountry)) {
+                      setNotice(
+                        phoneError ??
+                          "Enter a valid WhatsApp number without the country code",
+                      );
+                      return;
+                    }
+                    setNotice(null);
+                    setSavingPhone(true);
+                    try {
+                      const updated = await updateProfile({
+                        phone: whatsapp.replace(/\D/g, ""),
+                        countryCode,
+                      });
+                      setUser(updated);
+                      popConfetti();
+                    } catch (err) {
+                      setNotice(getErrorMessage(err));
+                    } finally {
+                      setSavingPhone(false);
+                    }
+                  }}
+                >
+                  Save WhatsApp
+                </Button>
               </div>
             </section>
 
@@ -413,6 +499,12 @@ export default function ProfilePage() {
                 subtitle="Sign out of this device"
                 onClick={() => setLogoutOpen(true)}
               />
+              <MenuRow
+                icon={Trash2}
+                title="Delete account"
+                subtitle="Permanently remove your listings, bids, and profile"
+                onClick={() => setDeleteOpen(true)}
+              />
             </section>
 
             <Dialog
@@ -451,6 +543,75 @@ export default function ProfilePage() {
                   }}
                 >
                   Log out
+                </Button>
+              </div>
+            </Dialog>
+
+            <Dialog
+              open={deleteOpen}
+              onClose={() => {
+                if (!deleting) {
+                  setDeleteOpen(false);
+                  setDeletePassword("");
+                  setConfirmDelete(false);
+                }
+              }}
+              title="Delete account?"
+            >
+              <p className="text-sm leading-relaxed text-ink-secondary">
+                This permanently deletes your account, listings, and bids. You
+                cannot undo this.
+              </p>
+              <div className="mt-4 space-y-3">
+                <Input
+                  label="Password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  helper="Required if you signed up with email. Google-only accounts can leave this blank."
+                />
+                <label className="flex cursor-pointer items-start gap-2.5 text-sm text-ink-secondary">
+                  <input
+                    type="checkbox"
+                    checked={confirmDelete}
+                    onChange={(e) => setConfirmDelete(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                  />
+                  <span>I understand this cannot be undone.</span>
+                </label>
+              </div>
+              <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  disabled={deleting}
+                  onClick={() => setDeleteOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  className="w-full sm:w-auto"
+                  loading={deleting}
+                  disabled={!confirmDelete}
+                  onClick={async () => {
+                    setDeleting(true);
+                    setNotice(null);
+                    try {
+                      await deleteAccount(deletePassword.trim() || undefined);
+                      clear();
+                      disconnectSocket();
+                      setDeleteOpen(false);
+                      router.replace("/");
+                    } catch (err) {
+                      setNotice(getErrorMessage(err));
+                    } finally {
+                      setDeleting(false);
+                    }
+                  }}
+                >
+                  Delete account
                 </Button>
               </div>
             </Dialog>

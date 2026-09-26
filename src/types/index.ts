@@ -28,9 +28,9 @@ export interface RegisterPayload {
   email: string;
   password: string;
   fullName: string;
-  countryCode: string;
-  phone: string;
   country: Country;
+  countryCode?: string;
+  phone?: string;
   primaryIntent?: PrimaryIntent;
 }
 

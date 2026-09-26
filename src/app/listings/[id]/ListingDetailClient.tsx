@@ -3,6 +3,7 @@
 import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Gavel, MapPin, Share2, ShieldCheck, X } from "lucide-react";
 import { AppShell } from "@/components/layout/Shells";
@@ -27,6 +28,7 @@ import {
   fetchListingBids,
   fetchMyBids,
   reportListing,
+  blockUser,
   respondToBid,
   updateListingStatus,
 } from "@/features/api/services";
@@ -51,6 +53,7 @@ export default function ListingDetailClient({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const qc = useQueryClient();
   const [offer, setOffer] = useState("");
@@ -60,6 +63,8 @@ export default function ListingDetailClient({
   const [bidOpen, setBidOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState("Suspicious listing");
+  const [blockOpen, setBlockOpen] = useState(false);
+  const [blocking, setBlocking] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [success, setSuccess] = useState<{
     kind: "offer" | "accepted";
@@ -334,6 +339,15 @@ export default function ListingDetailClient({
 
           {isOwner ? (
             <div className="space-y-3">
+              {missingWhatsApp ? (
+                <p className="text-xs text-ink-muted">
+                  Add a WhatsApp number in{" "}
+                  <Link href="/profile" className="font-semibold text-primary">
+                    Profile
+                  </Link>{" "}
+                  before you accept a deal.
+                </p>
+              ) : null}
               <p className="type-label">Your listing</p>
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -381,8 +395,8 @@ export default function ListingDetailClient({
                   {missingWhatsApp ? (
                     <p className="text-xs text-ink-muted">
                       Add a WhatsApp number in{" "}
-                      <Link href="/onboarding/hub" className="font-semibold text-primary">
-                        hub settings
+                      <Link href="/profile" className="font-semibold text-primary">
+                        Profile
                       </Link>{" "}
                       so accepted deals can reach you.
                     </p>
@@ -471,14 +485,23 @@ export default function ListingDetailClient({
             </Button>
           </Dialog>
 
-          {user ? (
-            <button
-              type="button"
-              className="min-h-11 text-xs font-semibold text-danger"
-              onClick={() => setReportOpen(true)}
-            >
-              Report listing
-            </button>
+          {user && !isOwner ? (
+            <div className="flex flex-wrap gap-4">
+              <button
+                type="button"
+                className="min-h-11 text-xs font-semibold text-danger"
+                onClick={() => setReportOpen(true)}
+              >
+                Report listing
+              </button>
+              <button
+                type="button"
+                className="min-h-11 text-xs font-semibold text-danger"
+                onClick={() => setBlockOpen(true)}
+              >
+                Block seller
+              </button>
+            </div>
           ) : null}
         </div>
       </div>
@@ -517,6 +540,52 @@ export default function ListingDetailClient({
       ) : null}
 
       <Dialog
+        open={blockOpen}
+        onClose={() => {
+          if (!blocking) setBlockOpen(false);
+        }}
+        title="Block seller"
+      >
+        <p className="text-sm leading-relaxed text-ink-secondary">
+          Their listings will be hidden from your feed. We will also notify
+          OfferBid so we can review this account.
+        </p>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            disabled={blocking}
+            onClick={() => setBlockOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            className="w-full sm:w-auto"
+            loading={blocking}
+            onClick={async () => {
+              if (!listing?.sellerId) {
+                setNotice("We could not identify this seller");
+                return;
+              }
+              setBlocking(true);
+              try {
+                await blockUser(listing.sellerId);
+                setBlockOpen(false);
+                router.replace("/explore");
+              } catch (e) {
+                setNotice(getErrorMessage(e));
+              } finally {
+                setBlocking(false);
+              }
+            }}
+          >
+            Block seller
+          </Button>
+        </div>
+      </Dialog>
+
+      <Dialog
         open={reportOpen}
         onClose={() => setReportOpen(false)}
         title="Report listing"
@@ -531,7 +600,11 @@ export default function ListingDetailClient({
           variant="danger"
           onClick={async () => {
             try {
-              await reportListing(id, reportReason || "Suspicious listing");
+              await reportListing(
+                id,
+                reportReason || "Suspicious listing",
+                listing?.sellerId,
+              );
               setNotice(null);
               popConfetti();
               setReportOpen(false);
@@ -670,12 +743,18 @@ export default function ListingDetailClient({
                           [bid.id]: value,
                         }))
                       }
-                      onAccept={() =>
+                      onAccept={() => {
+                        if (missingWhatsApp) {
+                          setNotice(
+                            "Add a WhatsApp number in Profile before accepting.",
+                          );
+                          return;
+                        }
                         respondMutation.mutate({
                           bidId: bid.id,
                           action: "ACCEPT",
-                        })
-                      }
+                        });
+                      }}
                       onReject={() =>
                         respondMutation.mutate({
                           bidId: bid.id,

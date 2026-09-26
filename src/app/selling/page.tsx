@@ -32,6 +32,7 @@ import { getErrorMessage, openWhatsApp } from "@/lib/formatters";
 import { popConfetti } from "@/lib/confetti";
 import { statusLabel } from "@/lib/status";
 import { connectSocket } from "@/lib/socket";
+import { effectiveWhatsAppPhone } from "@/lib/whatsappPhone";
 
 const BID_FILTERS = ["ALL", "PENDING", "COUNTERED", "ACCEPTED"] as const;
 
@@ -45,6 +46,7 @@ export default function SellingPage() {
     undefined,
   );
   const [notice, setNotice] = useState<string | null>(null);
+  const missingWhatsApp = Boolean(user && !effectiveWhatsAppPhone(user.phone));
 
   const listingsQuery = useQuery({
     queryKey: ["my-listings"],
@@ -134,6 +136,15 @@ export default function SellingPage() {
       />
 
       <ActionNotice message={notice} tone="error" className="mb-6" />
+      {missingWhatsApp ? (
+        <p className="mb-6 rounded-md border border-border bg-canvas px-3 py-2 text-sm text-ink-secondary">
+          Add a WhatsApp number in{" "}
+          <Link href="/profile" className="font-semibold text-primary">
+            Profile
+          </Link>{" "}
+          before you accept a deal.
+        </p>
+      ) : null}
 
       <section className="mb-10">
         <h2 className="type-section mb-3 text-ink">Your listings</h2>
@@ -290,12 +301,18 @@ export default function SellingPage() {
                         [bid.id]: value,
                       }))
                     }
-                    onAccept={() =>
+                    onAccept={() => {
+                      if (missingWhatsApp) {
+                        setNotice(
+                          "Add a WhatsApp number in Profile before accepting.",
+                        );
+                        return;
+                      }
                       respondMutation.mutate({
                         bidId: bid.id,
                         action: "ACCEPT",
-                      })
-                    }
+                      });
+                    }}
                     onReject={() =>
                       respondMutation.mutate({
                         bidId: bid.id,
