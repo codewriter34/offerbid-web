@@ -27,7 +27,13 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { ListingTile } from "@/components/listings/ListingTile";
 import { ListingSkeleton, ProfileSkeleton } from "@/components/ui/EmptyState";
 import { ActionNotice } from "@/components/ui/ActionNotice";
-import { logout, updateAvatar, updateProfile, deleteAccount } from "@/features/auth/authService";
+import {
+  deleteAccount,
+  fetchMe,
+  logout,
+  updateAvatar,
+  updateProfile,
+} from "@/features/auth/authService";
 import {
   fetchIdentity,
   fetchMyBids,
@@ -42,7 +48,7 @@ import { popConfetti } from "@/lib/confetti";
 import { disconnectSocket } from "@/lib/socket";
 import { effectiveWhatsAppPhone } from "@/lib/whatsappPhone";
 import { isValidLocalPhone, phoneTypingHint } from "@/lib/validators";
-import { COUNTRY_OPTIONS } from "@/lib/env";
+import { COUNTRY_OPTIONS, resolveActiveListingLimit } from "@/lib/env";
 import { statusLabel } from "@/lib/status";
 import { cn } from "@/lib/cn";
 import type { Country } from "@/types";
@@ -195,6 +201,12 @@ export default function ProfilePage() {
     enabled: Boolean(user),
   });
 
+  const meQuery = useQuery({
+    queryKey: ["users-me"],
+    queryFn: fetchMe,
+    enabled: Boolean(user),
+  });
+
   const identityQuery = useQuery({
     queryKey: ["identity"],
     queryFn: fetchIdentity,
@@ -210,7 +222,14 @@ export default function ProfilePage() {
   const listings = listingsQuery.data ?? [];
   const activeListings = listings.filter((l) => l.status === "ACTIVE");
   const soldListings = listings.filter((l) => l.status === "SOLD");
-  const listingCap = identityQuery.data?.listingCap ?? 3;
+  const listingCap = resolveActiveListingLimit({
+    fromMe: meQuery.isSuccess
+      ? meQuery.data.activeListingLimit
+      : user?.activeListingLimit,
+    fromIdentity: identityQuery.data?.listingCap,
+    isVerified: user?.isVerified,
+  });
+  const unlimited = listingCap === null;
   const verified =
     identityQuery.data?.status === "APPROVED" || Boolean(user?.isVerified);
   const hubLabel =
@@ -417,13 +436,17 @@ export default function ProfilePage() {
                     {verified ? "Identity verified" : "Verify to sell with more trust"}
                   </p>
                   <p className="mt-1 text-sm text-ink-secondary">
-                    {verified
-                      ? `You can have up to ${listingCap} active listings.`
-                      : `Complete ID verification to raise your cap from ${listingCap} to 10.`}
+                    {unlimited
+                      ? "No active listing cap on this account."
+                      : verified
+                        ? `You can have up to ${listingCap} active listings.`
+                        : `Complete ID verification to raise your cap from ${listingCap} to 10.`}
                   </p>
                   <p className="mt-2 type-meta">
-                    {activeListings.length}/{listingCap} active listings used ·{" "}
-                    <StatusBadge status={identityQuery.data?.status ?? "NONE"} />
+                    {unlimited
+                      ? `${activeListings.length} active listings`
+                      : `${activeListings.length}/${listingCap} active listings used`}{" "}
+                    · <StatusBadge status={identityQuery.data?.status ?? "NONE"} />
                   </p>
                   {!verified ? (
                     <Button

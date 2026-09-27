@@ -30,11 +30,26 @@ function asRecord(value: unknown): Raw {
     : {};
 }
 
+function readActiveListingLimit(
+  raw: Raw,
+  keys: string[] = ["activeListingLimit", "active_listing_limit"],
+): number | null | undefined {
+  for (const key of keys) {
+    if (!Object.prototype.hasOwnProperty.call(raw, key)) continue;
+    const value = raw[key];
+    if (value === null) return null;
+    const parsed = pickNumber(value);
+    if (parsed !== null) return parsed;
+  }
+  return undefined;
+}
+
 export function mapUser(rawInput: unknown): User {
   const raw = asRecord(rawInput);
   const city = pickString(raw.city);
   const address = pickString(raw.address);
   const location = pickString(raw.location);
+  const activeListingLimit = readActiveListingLimit(raw);
   return {
     id: String(raw.id ?? ""),
     email: pickString(raw.email),
@@ -57,6 +72,7 @@ export function mapUser(rawInput: unknown): User {
         (city && address && location),
     ),
     isVerified: Boolean(raw.isVerified ?? raw.is_verified),
+    activeListingLimit,
     googleId: pickString(raw.googleId, raw.google_id),
     createdAt: pickString(raw.createdAt, raw.created_at),
   };
@@ -255,13 +271,15 @@ export function mapIdentity(rawInput: unknown): Identity {
       pickString(raw.selfieUrl, raw.selfie_url) ??
       identityFileUrl(files, "SELFIE"),
     rejectionReason: pickString(raw.rejectionReason, raw.rejection_reason),
-    listingCap:
-      pickNumber(
-        raw.listingCap,
-        raw.listing_cap,
-        raw.activeListingLimit,
-        raw.active_listing_limit,
-      ) ?? (normalized === "APPROVED" ? 10 : 3),
+    listingCap: (() => {
+      const cap = readActiveListingLimit(raw, [
+        "activeListingLimit",
+        "active_listing_limit",
+        "listingCap",
+        "listing_cap",
+      ]);
+      return cap === undefined ? (normalized === "APPROVED" ? 10 : 3) : cap;
+    })(),
   };
 }
 

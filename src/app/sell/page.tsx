@@ -23,9 +23,10 @@ import { useAuthStore } from "@/stores/authStore";
 import { useHubStore } from "@/stores/hubStore";
 import {
   MAX_LISTING_IMAGES,
-  MAX_ACTIVE_LISTINGS_UNVERIFIED,
   MAX_ACTIVE_LISTINGS_VERIFIED,
+  resolveActiveListingLimit,
 } from "@/lib/env";
+import { fetchMe } from "@/features/auth/authService";
 import { friendlyUploadError } from "@/lib/formatters";
 import { popConfetti } from "@/lib/confetti";
 import { uploadFiles } from "@/lib/uploads";
@@ -68,22 +69,35 @@ export default function SellPage() {
     queryFn: fetchMyListings,
     enabled: Boolean(user),
   });
+  const meQuery = useQuery({
+    queryKey: ["users-me"],
+    queryFn: fetchMe,
+    enabled: Boolean(user),
+  });
   const identityQuery = useQuery({
     queryKey: ["identity"],
     queryFn: fetchIdentity,
     enabled: Boolean(user),
   });
 
-  const listingCap =
-    identityQuery.data?.listingCap ??
-    (user?.isVerified
-      ? MAX_ACTIVE_LISTINGS_VERIFIED
-      : MAX_ACTIVE_LISTINGS_UNVERIFIED);
+  const fromMe = meQuery.isSuccess
+    ? meQuery.data.activeListingLimit
+    : user?.activeListingLimit;
+  const meKnown =
+    meQuery.isSuccess || user?.activeListingLimit !== undefined;
+  const listingCap = meKnown
+    ? resolveActiveListingLimit({
+        fromMe,
+        fromIdentity: identityQuery.data?.listingCap,
+        isVerified: user?.isVerified,
+      })
+    : null;
+  const unlimited = listingCap === null;
   const activeCount =
     listingsQuery.data?.filter(
       (listing) => String(listing.status).toUpperCase() === "ACTIVE",
     ).length ?? 0;
-  const atLimit = activeCount >= listingCap;
+  const atLimit = meKnown && listingCap !== null && activeCount >= listingCap;
   const currency = currencyForCountry(
     countries,
     user?.country ?? countries[0]?.country ?? "CAMEROON",
@@ -140,7 +154,7 @@ export default function SellPage() {
     e.preventDefault();
     if (!user) return;
     setNotice(null);
-    if (atLimit) {
+    if (atLimit && listingCap !== null) {
       setNotice(
         `You can have up to ${listingCap} active listings. Verify identity to raise the cap.`,
       );
@@ -187,17 +201,23 @@ export default function SellPage() {
             description="Photos, a price, and your saved hub. Buyers nearby can offer."
           />
           <p className="mb-6 type-meta">
-            {activeCount}/{listingCap} active listings
-            {listingCap < MAX_ACTIVE_LISTINGS_VERIFIED ? (
+            {unlimited ? (
+              `${activeCount} active listings`
+            ) : (
               <>
-                {" "}
-                ·{" "}
-                <Link href="/identity" className="font-semibold text-primary">
-                  Verify ID
-                </Link>{" "}
-                to list more
+                {activeCount}/{listingCap} active listings
+                {listingCap < MAX_ACTIVE_LISTINGS_VERIFIED ? (
+                  <>
+                    {" "}
+                    ·{" "}
+                    <Link href="/identity" className="font-semibold text-primary">
+                      Verify ID
+                    </Link>{" "}
+                    to list more
+                  </>
+                ) : null}
               </>
-            ) : null}
+            )}
           </p>
 
           {atLimit ? (

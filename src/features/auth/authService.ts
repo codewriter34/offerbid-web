@@ -75,6 +75,11 @@ export async function signInWithGoogleIdToken(idToken: string) {
   return persistSession(data);
 }
 
+export async function fetchMe(): Promise<User> {
+  const { data } = await apiClient.get(ENDPOINTS.USERS.ME);
+  return mapUser(data?.user ?? data);
+}
+
 export async function restoreSession(): Promise<User | null> {
   try {
     const tokens = getTokens();
