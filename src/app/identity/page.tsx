@@ -19,6 +19,8 @@ import {
 import { friendlyUploadError } from "@/lib/formatters";
 import { uploadFiles } from "@/lib/uploads";
 import { useAuthStore } from "@/stores/authStore";
+import { fetchMe } from "@/features/auth/authService";
+import { resolveActiveListingLimit } from "@/lib/env";
 import { popConfetti } from "@/lib/confetti";
 import type { IdKind } from "@/types";
 
@@ -82,6 +84,18 @@ export default function IdentityPage() {
     queryFn: fetchIdentity,
     enabled: Boolean(user),
   });
+  const meQuery = useQuery({
+    queryKey: ["users-me"],
+    queryFn: fetchMe,
+    enabled: Boolean(user),
+  });
+  const listingCap = resolveActiveListingLimit({
+    fromMe: meQuery.isSuccess
+      ? meQuery.data.activeListingLimit
+      : user?.activeListingLimit,
+    fromIdentity: data?.listingCap,
+    isVerified: user?.isVerified,
+  });
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -126,7 +140,9 @@ export default function IdentityPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={data?.status ?? "NONE"} />
                 <span className="type-meta">
-                  {data?.listingCap ?? 3} active listings allowed
+                  {listingCap === null
+                    ? "No active listing cap"
+                    : `${listingCap} active listings allowed`}
                 </span>
               </div>
               {data?.status === "APPROVED" ? (

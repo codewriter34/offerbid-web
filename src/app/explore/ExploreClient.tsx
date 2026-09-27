@@ -62,10 +62,11 @@ export default function ExploreClient() {
   const searchParams = useSearchParams();
   const initialQ = searchParams.get("q") ?? "";
   const initialCity = searchParams.get("city");
+  const initialCategory = searchParams.get("category");
 
   const [search, setSearch] = useState(initialQ);
   const [q, setQ] = useState(initialQ);
-  const [category, setCategory] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(initialCategory);
   const [city, setCity] = useState<string | null>(initialCity);
   const [location, setLocation] = useState<string | null>(null);
   const [sort, setSort] = useState("newest");
@@ -80,6 +81,11 @@ export default function ExploreClient() {
     const nextCity = searchParams.get("city");
     if (nextCity) setCity(nextCity);
   }, [searchParams]);
+
+  const urlCategory = searchParams.get("category");
+  useEffect(() => {
+    setCategory(urlCategory);
+  }, [urlCategory]);
 
   // Live search-as-you-type (debounced) — no Search button required.
   useEffect(() => {

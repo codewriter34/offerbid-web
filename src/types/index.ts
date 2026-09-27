@@ -15,6 +15,8 @@ export interface User {
   avatarUrl: string | null;
   profileComplete: boolean;
   isVerified: boolean;
+  /** `null` from GET /users/me means no active-listing cap. */
+  activeListingLimit?: number | null;
   googleId: string | null;
   createdAt: string | null;
 }
@@ -207,7 +209,7 @@ export interface Identity {
   idBackUrl: string | null;
   selfieUrl: string | null;
   rejectionReason: string | null;
-  listingCap: number;
+  listingCap: number | null;
 }
 
 export interface SubmitIdentityPayload {

@@ -56,4 +56,7 @@ export const ENDPOINTS = {
     READ_ALL: "/notifications/read-all",
   },
   REPORTS: "/reports",
+  ANALYTICS: {
+    SESSION: "/analytics/session",
+  },
 } as const;

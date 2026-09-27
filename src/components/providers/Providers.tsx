@@ -7,6 +7,7 @@ import { useHubStore } from "@/stores/hubStore";
 import { restoreSession } from "@/features/auth/authService";
 import { fetchHubs } from "@/features/api/services";
 import { connectSocket, disconnectSocket } from "@/lib/socket";
+import { recordAnalyticsSession } from "@/lib/analytics";
 
 function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const setUser = useAuthStore((s) => s.setUser);
@@ -15,6 +16,10 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((s) => s.user);
   const setCatalog = useHubStore((s) => s.setCatalog);
   const setSelection = useHubStore((s) => s.setSelection);
+
+  useEffect(() => {
+    recordAnalyticsSession();
+  }, []);
 
   useEffect(() => {
     let mounted = true;

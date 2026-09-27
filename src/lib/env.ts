@@ -38,6 +38,21 @@ export const IOS_APP_URL: string | null = null;
 
 export const MAX_ACTIVE_LISTINGS_UNVERIFIED = 3;
 export const MAX_ACTIVE_LISTINGS_VERIFIED = 10;
+
+/** `null` = unlimited (API `activeListingLimit: null`). */
+export function resolveActiveListingLimit(input: {
+  fromMe?: number | null;
+  fromIdentity?: number | null;
+  isVerified?: boolean;
+}): number | null {
+  if (input.fromMe === null) return null;
+  if (typeof input.fromMe === "number") return input.fromMe;
+  if (input.fromIdentity === null) return null;
+  if (typeof input.fromIdentity === "number") return input.fromIdentity;
+  return input.isVerified
+    ? MAX_ACTIVE_LISTINGS_VERIFIED
+    : MAX_ACTIVE_LISTINGS_UNVERIFIED;
+}
 export const MAX_ACTIVE_BIDS_PER_ITEM = 3;
 export const MAX_LISTING_IMAGES = 4;
 
