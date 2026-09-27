@@ -14,10 +14,7 @@ import { useHubStore } from "@/stores/hubStore";
 import { getErrorMessage } from "@/lib/formatters";
 import { popConfetti } from "@/lib/confetti";
 import { assertRealPlace, type HubDraft } from "@/lib/hubs";
-import {
-  setLocalWhatsAppPhone,
-  effectiveWhatsAppPhone,
-} from "@/lib/whatsappPhone";
+import { setLocalWhatsAppPhone } from "@/lib/whatsappPhone";
 import { COUNTRY_OPTIONS } from "@/lib/env";
 import { isValidLocalPhone, phoneTypingHint } from "@/lib/validators";
 import type { Country } from "@/types";
@@ -39,12 +36,9 @@ export default function HubOnboardingPage() {
     customLocation: "",
   });
   const [address, setAddress] = useState(user?.address ?? "");
-  const [whatsapp, setWhatsapp] = useState(
-    () => effectiveWhatsAppPhone(user?.phone) ?? "",
-  );
+  const [whatsapp, setWhatsapp] = useState(user?.phone?.replace(/\D/g, "") ?? "");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const needsWhatsApp = !user?.phone?.trim();
 
   useEffect(() => {
     if (!isLoading && !user) router.replace("/auth?next=/onboarding/hub");
@@ -64,11 +58,12 @@ export default function HubOnboardingPage() {
       setNotice("Add a meetup address or landmark");
       return;
     }
-    if (needsWhatsApp) {
+    const phoneDigits = whatsapp.replace(/\D/g, "");
+    if (phoneDigits) {
       const country = (hub.country === "NIGERIA" ? "NIGERIA" : "CAMEROON") as Country;
       if (!isValidLocalPhone(whatsapp, country)) {
         setNotice(
-          phoneTypingHint(whatsapp, country) ?? "Enter a WhatsApp number",
+          phoneTypingHint(whatsapp, country) ?? "Enter a valid WhatsApp number, or leave it blank",
         );
         return;
       }
@@ -82,17 +77,17 @@ export default function HubOnboardingPage() {
         city,
         location,
         address: address.trim(),
-        ...(needsWhatsApp
+        ...(phoneDigits
           ? {
-              phone: whatsapp.replace(/\D/g, ""),
+              phone: phoneDigits,
               countryCode,
             }
           : {}),
       });
       setUser(updated);
       setSelection(city, location);
-      if (needsWhatsApp) {
-        setLocalWhatsAppPhone(`${countryCode}${whatsapp.replace(/\D/g, "")}`);
+      if (phoneDigits) {
+        setLocalWhatsAppPhone(`${countryCode}${phoneDigits}`);
       }
       popConfetti();
       if (updated.primaryIntent === "SELL") {
@@ -125,16 +120,13 @@ export default function HubOnboardingPage() {
             placeholder="e.g. Near main road or landmark"
             required
           />
-          {needsWhatsApp ? (
-            <Input
-              label="WhatsApp number"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              placeholder={hub.country === "NIGERIA" ? "8012345678" : "6XXXXXXXX"}
-              required
-              helper="Saved to your account so accepted deals can reach you."
-            />
-          ) : null}
+          <Input
+            label="WhatsApp number (optional)"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+            placeholder={hub.country === "NIGERIA" ? "8012345678" : "6XXXXXXXX"}
+            helper="Add now or later in Profile. Needed only when you want WhatsApp handoff after a deal."
+          />
           <Button loading={saving} onClick={save} className="w-full" size="lg">
             Continue to Explore
           </Button>

@@ -103,8 +103,20 @@ export async function contactSeller(id: string) {
   }
 }
 
-export async function reportListing(listingId: string, reason: string) {
-  await apiClient.post(ENDPOINTS.REPORTS, { listingId, reason });
+export async function reportListing(
+  listingId: string,
+  reason: string,
+  reportedUserId?: string,
+) {
+  await apiClient.post(ENDPOINTS.REPORTS, {
+    listingId,
+    reason,
+    ...(reportedUserId ? { reportedUserId } : {}),
+  });
+}
+
+export async function blockUser(userId: string) {
+  await apiClient.post(ENDPOINTS.USERS.BLOCK(userId));
 }
 
 export async function createBid(payload: CreateBidPayload) {

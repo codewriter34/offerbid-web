@@ -22,6 +22,7 @@ export const ENDPOINTS = {
     ME: "/users/me",
     COMPLETE_PROFILE: "/users/complete-profile",
     AVATAR: "/users/me/avatar",
+    BLOCK: (id: string) => `/users/${id}/block`,
   },
   HUBS: {
     LIST: "/hubs",

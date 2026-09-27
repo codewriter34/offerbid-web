@@ -253,15 +253,17 @@ export default function AuthClient() {
         setFormNotice({ message: "Enter your full name", tone: "error" });
         return;
       }
-      if (!isValidLocalPhone(phone, country)) {
-        setFormNotice({
-          message:
-            phoneError ??
-            phoneTypingHint(phone, country) ??
-            "Enter a WhatsApp number",
-          tone: "error",
-        });
-        return;
+      if (phone.replace(/\D/g, "")) {
+        if (!isValidLocalPhone(phone, country)) {
+          setFormNotice({
+            message:
+              phoneError ??
+              phoneTypingHint(phone, country) ??
+              "Enter a valid WhatsApp number, or leave it blank",
+            tone: "error",
+          });
+          return;
+        }
       }
       const passwordError = isValidPassword(password);
       if (passwordError) {
@@ -316,14 +318,16 @@ export default function AuthClient() {
         popConfetti();
         router.replace(session.user.profileComplete ? next : "/onboarding/hub");
       } else if (mode === "signup") {
+        const phoneDigits = phone.replace(/\D/g, "");
         await registerAccount({
           email: email.trim(),
           password,
           fullName: fullName.trim(),
-          phone: phone.replace(/\D/g, ""),
           country,
-          countryCode,
           primaryIntent,
+          ...(phoneDigits
+            ? { phone: phoneDigits, countryCode }
+            : {}),
         });
         setFormNotice({
           message: "Check your email for the verification code",
@@ -423,7 +427,7 @@ export default function AuthClient() {
               ? "Log in with email or Google — same account as the app."
               : "Log in with email — same account as the app.")}
           {mode === "signup" &&
-            "WhatsApp is required so accepted deals can reach you."}
+            "WhatsApp is optional. You can add it later in Profile when you want to close a deal."}
           {mode === "otp" &&
             `Enter the 6-digit code we sent to ${email || "your email"}.`}
           {mode === "forgot" && "We’ll send a reset code if that email is registered."}
@@ -536,14 +540,14 @@ export default function AuthClient() {
                 ))}
               </Select>
               <Input
-                label="WhatsApp phone"
-                required
+                label="WhatsApp phone (optional)"
                 autoComplete="tel"
                 value={phone}
                 leading={countryCode}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder={country === "NIGERIA" ? "8012345678" : "6XXXXXXXX"}
                 error={phoneError ?? undefined}
+                helper="Not required to create an account. Add it in Profile before you accept a deal."
               />
               <Select
                 label="What are you here for first?"
