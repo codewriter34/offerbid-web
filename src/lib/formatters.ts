@@ -59,17 +59,18 @@ export function normalizeWhatsAppUrl(url: string): string {
   return `https://${trimmed.replace(/^\/+/, "")}`;
 }
 
-/** Open a tab in the same tick as the click, before any `await`. */
+function isPhoneWhatsApp() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+/** Desktop only: hold a tab through the API wait. Phones must not open about:blank. */
 export function openWhatsAppWindow(): Window | null {
+  if (typeof window === "undefined" || isPhoneWhatsApp()) return null;
   try {
     return window.open("about:blank", "_blank");
   } catch {
     return null;
   }
-}
-
-function prefersSameTabWhatsApp() {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
 export function openWhatsApp(url: string, popup?: Window | null) {
@@ -78,7 +79,7 @@ export function openWhatsApp(url: string, popup?: Window | null) {
     popup?.close();
     return;
   }
-  if (prefersSameTabWhatsApp()) {
+  if (isPhoneWhatsApp()) {
     popup?.close();
     window.location.assign(href);
     return;
