@@ -64,16 +64,28 @@ export function extractTokens(data: unknown): {
 }
 
 export function extractWhatsAppUrl(data: unknown): string | null {
+  if (typeof data === "string" && /wa\.me|whatsapp/i.test(data)) {
+    return data;
+  }
   const raw = asRecord(data);
   const nested = asRecord(raw.data);
-  return pickString(
+  const deeper = asRecord(nested.data);
+  const picked = pickString(
     raw.whatsappUrl,
     raw.whatsapp_url,
     raw.whatsapp,
     nested.whatsappUrl,
     nested.whatsapp_url,
     nested.whatsapp,
+    deeper.whatsappUrl,
+    deeper.whatsapp_url,
+    deeper.whatsapp,
   );
+  if (picked) return picked;
+  const maybeUrl = pickString(raw.url, nested.url);
+  if (maybeUrl && /wa\.me|whatsapp/i.test(maybeUrl)) return maybeUrl;
+  if (typeof data === "string" && data.length > 0) return data;
+  return null;
 }
 
 function imageFromUnknown(value: unknown): string | undefined {

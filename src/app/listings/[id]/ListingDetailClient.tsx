@@ -37,6 +37,7 @@ import {
   formatPrice,
   getErrorMessage,
   openWhatsApp,
+  openWhatsAppWindow,
 } from "@/lib/formatters";
 import { popConfetti } from "@/lib/confetti";
 import { useAuthStore } from "@/stores/authStore";
@@ -185,12 +186,18 @@ export default function ListingDetailClient({
 
   async function handleContactSeller() {
     if (isContacting) return;
+    const popup = openWhatsAppWindow();
     setIsContacting(true);
     try {
       const url = await contactSeller(id);
-      if (url) openWhatsApp(url);
-      else setNotice("WhatsApp link unavailable");
+      if (url) {
+        openWhatsApp(url, popup);
+      } else {
+        popup?.close();
+        setNotice("WhatsApp link unavailable");
+      }
     } catch (e) {
+      popup?.close();
       setNotice(getErrorMessage(e));
     } finally {
       setIsContacting(false);

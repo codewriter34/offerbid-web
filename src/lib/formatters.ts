@@ -46,9 +46,56 @@ export function formatCountdown(expiresAt: string | null | undefined): {
   return { label, urgent: ms < 60 * 60 * 1000, expired: false };
 }
 
-export function openWhatsApp(url: string) {
-  if (!url) return;
-  window.open(url, "_blank", "noopener,noreferrer");
+export function normalizeWhatsAppUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (/^whatsapp:/i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  const digits = trimmed.replace(/\D/g, "");
+  if (digits.length >= 8 && digits.length <= 15) {
+    return `https://wa.me/${digits}`;
+  }
+  return `https://${trimmed.replace(/^\/+/, "")}`;
+}
+
+/** Open a tab in the same tick as the click, before any `await`. */
+export function openWhatsAppWindow(): Window | null {
+  try {
+    return window.open("about:blank", "_blank");
+  } catch {
+    return null;
+  }
+}
+
+function prefersSameTabWhatsApp() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+export function openWhatsApp(url: string, popup?: Window | null) {
+  const href = normalizeWhatsAppUrl(url);
+  if (!href) {
+    popup?.close();
+    return;
+  }
+  if (prefersSameTabWhatsApp()) {
+    popup?.close();
+    window.location.assign(href);
+    return;
+  }
+  if (popup && !popup.closed) {
+    try {
+      popup.location.replace(href);
+      popup.focus();
+      return;
+    } catch {
+      popup.close();
+    }
+  }
+  const opened = window.open(href, "_blank");
+  if (opened == null) {
+    window.location.assign(href);
+  }
 }
 
 export function getErrorMessage(error: unknown, fallback = "Something went wrong") {
